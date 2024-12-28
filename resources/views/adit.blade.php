@@ -87,16 +87,23 @@
             right: 20px;
         }
 
+        .logout form {
+            display: inline;
+        }
+
         .logout .button {
             font-size: 1em;
             padding: 10px 15px;
             background-color: #dc3545;
             color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
             text-decoration: none;
         }
 
         .logout .button:hover {
-            opacity: 0.9;
+            background-color: #c82333;
         }
     </style>
 </head>
@@ -108,7 +115,10 @@
 
     <!-- ログアウトボタン -->
     <div class="logout">
-        <a href="{{ route('login') }}" class="button">ログアウト</a>
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <button type="submit" class="button">ログアウト</button>
+        </form>
     </div>
 
     <div class="container">
