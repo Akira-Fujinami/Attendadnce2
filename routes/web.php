@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\AditController;
+use App\Http\Controllers\AttendanceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -11,6 +13,7 @@ Route::get('/', function () {
 Route::get('/attendance', function () {
     return view('attendance');
 })->name('attendance');
+Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
 Route::get('/change', function () {
     return view('change');
 })->name('change');
@@ -55,3 +58,4 @@ Route::middleware('auth:employees')->group(function () {
     })->name('adit');
 });
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::post('/adit', [AditController::class, 'adit'])->name('adit');

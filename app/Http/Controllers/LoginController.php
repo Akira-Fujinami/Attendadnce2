@@ -10,11 +10,6 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // $request->validate([
-        //     'email' => 'required|email',
-        //     'password' => 'required|min:6',
-        // ]);
-
         if (Auth::attempt($request->only('email', 'password'))) {
             return redirect()->route('staff')->with('success', 'ログインに成功しました');
         }

@@ -110,7 +110,7 @@
 <body>
     <!-- 出勤簿へ遷移ボタン -->
     <div class="navigation">
-        <a href="{{ route('attendance') }}" class="button">出勤簿へ遷移</a>
+        <a href="{{ route('attendance', ['company_id' => Auth::user()->company_id, 'employee_id' => Auth::user()->id]) }}" class="button">出勤簿へ遷移</a>
     </div>
 
     <!-- ログアウトボタン -->
@@ -128,10 +128,15 @@
         </div>
 
         <div class="button-group">
-            <button class="button button-green">出勤</button>
-            <button class="button button-yellow">休憩開始</button>
-            <button class="button button-blue">休憩終了</button>
-            <button class="button button-red">退勤</button>
+            <form action="{{ route('adit') }}" method="POST">
+                @csrf
+                <button type="submit" name="adit_item" value="work_start" class="button button-green">出勤</button>
+                <button type="submit" name="adit_item" value="break_start" class="button button-yellow">休憩開始</button>
+                <button type="submit" name="adit_item" value="break_end" class="button button-blue">休憩終了</button>
+                <button type="submit" name="adit_item" value="work_end" class="button button-red">退勤</button>
+                <input type="hidden" name="employee_id" value="{{ Auth::user()->id }}">
+                <input type="hidden" name="company_id" value="{{ Auth::user()->company_id }}">
+            </form>
         </div>
     </div>
 
