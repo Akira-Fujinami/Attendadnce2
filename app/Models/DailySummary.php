@@ -52,4 +52,11 @@ class DailySummary extends Model
     {
         $this->attributes['error_types'] = is_array($value) ? implode(',', $value) : $value;
     }
+
+    // App\Models\DailySummary.php
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
 }

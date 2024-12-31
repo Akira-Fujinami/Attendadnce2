@@ -5,16 +5,39 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
+use App\Models\DailySummary;
 use Illuminate\Support\Facades\Hash;
 
 class StaffController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $status = $request->input('status', '在職中');
         $user = Auth::User();
-        $EmployeeList = Employee::where('company_id', $user->id)->get();
+        $query = Employee::query();
 
-        return view('staff', ['EmployeeList' => $EmployeeList]);
+        // ステータスでフィルタリング
+        if ($status !== 'すべて') {
+            $query->where('retired', $status);
+        }
+    
+        // 従業員リストを取得
+        $EmployeeList = $query->where('company_id', Auth::user()->id)->get();
+        foreach ($EmployeeList as $employee) {
+            $errors = DailySummary::where('company_id', $user->id)
+                ->where('employee_id', $employee->id)
+                ->whereNotNull('error_types')
+                ->with('employee')
+                ->get()
+                ->pluck('error_types', 'employee.name') // 名前をキーにする
+                ->toArray();
+            $employee->errors = $errors;
+        }
+
+        return view('staff', [
+            'EmployeeList' => $EmployeeList,
+            'currentStatus' => $status,
+        ]);
     }
     public function detail(Request $request)
     {

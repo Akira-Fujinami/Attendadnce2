@@ -63,11 +63,11 @@ class AttendanceController extends Controller
                 }
             }
         }
-
         return view('attendance', [
             'dates' => $dates,
             'attendanceRecords' => $attendanceRecords,
             'name' => $employeeName,
+            'employeeId' => $employeeId,
             'totalWorkHours' => $totalWorkHours,
             'totalBreakHours' => $totalBreakHours,
         ]);
@@ -88,6 +88,14 @@ class AttendanceController extends Controller
             $employee->attendanceDays = $summary->attendanceDays ?? 0;
             $employee->totalWorkHours = $summary->totalWorkHours ?? 0;
             $employee->totalSalary = $summary->totalSalary ?? 0;
+
+            $hasErrors = DailySummary::where('company_id', $request->companyId)
+            ->where('employee_id', $employee->id)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->whereNotNull('error_types')
+            ->exists();
+    
+            $employee->hasErrors = $hasErrors;
         }
 
         // データをBladeに渡す
@@ -118,6 +126,7 @@ class AttendanceController extends Controller
                 'date' => $summary->date,
                 'work_hours' => $summary->total_work_hours,
                 'salary' => $summary->salary,
+                'error' => $summary->error_types,
             ];
 
             $totalWorkHours += $summary->total_work_hours;
@@ -132,6 +141,73 @@ class AttendanceController extends Controller
             'totalSalary' => (int) $totalSalary,
         ]);
     }
-
-
+    public function editAttendance(Request $request)
+    {
+        // リクエストから日付と従業員IDを取得
+        $date = $request->input('date');
+        $employeeId = $request->input('employeeId');
+    
+        // 該当する従業員とその日付の打刻データを取得
+        $attendanceRecords = Adit::where('employee_id', $employeeId)
+            ->whereDate('date', $date)
+            ->get();
+    
+        // Bladeに渡すデータ
+        $data = [
+            'date' => $date,
+            'employeeId' => $employeeId,
+            'attendanceRecords' => $attendanceRecords,
+        ];
+    
+        // editAttendanceビューを表示
+        return view('editAttendance', $data);
+    }
+    public function updateAttendance(Request $request)
+    {
+        $validatedData = $request->validate([
+            'date' => 'required|date',
+            'employeeId' => 'required|integer',
+            'work_start' => 'nullable|date_format:H:i',
+            'work_end' => 'nullable|date_format:H:i',
+            'break_start' => 'nullable|date_format:H:i',
+            'break_end' => 'nullable|date_format:H:i',
+        ]);
+    
+        // 打刻修正のデータを保存または更新
+        $aditItems = [
+            'work_start' => $request->work_start,
+            'work_end' => $request->work_end,
+            'break_start' => $request->break_start,
+            'break_end' => $request->break_end,
+        ];
+    
+        foreach ($aditItems as $aditItem => $time) {
+            if ($time) {
+                Adit::updateOrCreate(
+                    [
+                        'employee_id' => $request->employeeId,
+                        'company_id' => $request->companyId,
+                        'date' => $request->date,
+                        'adit_item' => $aditItem,
+                    ],
+                    [
+                        'minutes' => \Carbon\Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $time),
+                        'status' => 'approved', // 必要に応じてステータスを設定
+                    ]
+                );
+            } else {
+                // 該当する打刻データを削除（空の場合）
+                Adit::where('employee_id', $request->employeeId)
+                    ->where('company_id', $request->companyId)
+                    ->where('date', $request->date)
+                    ->where('adit_item', $aditItem)
+                    ->delete();
+            }
+        }
+    
+        return redirect()->route('attendance', [
+            'company_id' => $request->companyId,
+            'employee_id' => $request->employeeId
+            ]);
+    }    
 }

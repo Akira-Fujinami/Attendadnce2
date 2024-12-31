@@ -35,6 +35,26 @@ class AditController extends Controller
                 $status = '退勤済み';
             }
         }
+        $startOfMonth = Carbon::now()->startOfMonth()->toDateString(); // 月初
+        $endOfMonth = Carbon::now()->endOfMonth()->toDateString();     // 月末
+    
+        $errorSummaries = DailySummary::where('company_id', $user->company_id)
+        ->where('employee_id', $user->id)
+        ->whereBetween('date', [$startOfMonth, $endOfMonth])
+        ->whereNotNull('error_types') // エラーがあるデータのみ取得
+        ->get();
+
+        // エラーの内容を配列に格納
+        $errors = $errorSummaries->map(function ($summary) {
+            return [
+                'date' => $summary->date,
+                'error' => is_array($summary->error_types)
+                    ? implode(', ', $summary->error_types)
+                    : $summary->error_types,
+            ];
+        });
+        // dd($errors);
+        
 
         // dd($latestAdit);
         $data = [
@@ -42,6 +62,7 @@ class AditController extends Controller
             'status' => $status,
             'latestAdit' => $latestAdit ? $latestAdit->adit_item : null,
             'aditExists' => $aditExists,
+            'errors' => $errors,
         ];
         // dd($data);
 
@@ -74,6 +95,23 @@ class AditController extends Controller
             ]
         );
         $today = now()->format('Y-m-d');
+        $aditRecords = Adit::where('company_id', $request->company_id)
+                            ->where('employee_id', $request->employee_id)
+                            ->where('date', $today)
+                            ->orderBy('minutes')
+                            ->pluck('adit_item');
+    
+        $expectedOrder = ['work_start', 'break_start', 'break_end', 'work_end'];
+        $currentOrder = $aditRecords->toArray();
+        if (!$this->isCorrectOrder($currentOrder, $expectedOrder)) {
+            $errorType = '打刻が正しくされていません。';
+            // DailySummary にエラーを更新
+            $dailySummary->update([
+                'error_types' => $errorType,
+            ]);
+        }
+        
+        $today = now()->format('Y-m-d');
         $aditExists = Adit::whereDate('created_at', $today)
                         ->where('company_id', $request->company_id)
                         ->where('employee_id', $request->employee_id)
@@ -91,7 +129,25 @@ class AditController extends Controller
                 'salary' => $salary, // 給与計算ロジック
             ]);
         }
-        return back();
+        return redirect()->route('adit');
+    }
+
+    private function isCorrectOrder(array $currentOrder, array $expectedOrder): bool
+    {
+        $index = 0;
+
+        foreach ($currentOrder as $item) {
+            if ($item === $expectedOrder[$index]) {
+                $index++;
+                if ($index >= count($expectedOrder)) {
+                    break;
+                }
+            } elseif (!in_array($item, $expectedOrder)) {
+                return false; // 不正なアイテムが存在する場合
+            }
+        }
+
+        return $index === count($expectedOrder);
     }
 
     protected function calculateWorkHours($companyId, $employeeId, $date)
@@ -153,7 +209,10 @@ class AditController extends Controller
         $actualWorkHours = $totalWorkHours - $totalBreakHours;
 
         // 給与を計算
-        $salary = ($actualWorkHours * $wage) + $transportation;
+        $salary = 0;
+        if ($actualWorkHours > 0) {
+            $salary = ($actualWorkHours * $wage) + $transportation;
+        }
 
         return $salary;
     }

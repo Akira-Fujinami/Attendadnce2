@@ -13,7 +13,6 @@ Route::get('/', function () {
 Route::get('/attendance', function () {
     return view('attendance');
 })->name('attendance');
-Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
 Route::get('/change', function () {
     return view('change');
 })->name('change');
@@ -47,6 +46,9 @@ Route::middleware(['auth'])->group(function () {
 });
 Route::middleware('auth:employees')->group(function () {
     Route::get('/adit', [AditController::class, 'index'])->name('adit');
+    Route::get('/editAttendance', [AttendanceController::class, 'editAttendance'])->name('editAttendance');
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
+    Route::post('/updateAttendance', [AttendanceController::class, 'updateAttendance'])->name('updateAttendance');
 });
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::post('/adit', [AditController::class, 'adit'])->name('adit');

@@ -80,6 +80,34 @@
         .back-link a:hover {
             text-decoration: underline;
         }
+        .error-icon {
+            color: #dc3545;
+            font-weight: bold;
+            margin-left: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .error-icon::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 120%; /* 上に表示 */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            display: none;
+            color: red;
+        }
+
+        .error-icon:hover::after {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -102,7 +130,14 @@
             <tbody>
                 @foreach ($attendanceData as $data)
                 <tr>
-                    <td>{{ $data['date'] }}</td>
+                    <td>@if (!empty($data['error']))
+                            @php
+                            $errorText = is_array($data['error']) ? implode(', ', $data['error']) : $data['error'];
+                        @endphp
+                        <span class="error-icon" title="{{ $errorText }}">&#33;</span>
+                        @endif
+                        {{ $data['date'] }}
+                    </td>
                     <td>{{ $data['work_hours'] }} 時間</td>
                     <td>¥{{ number_format($data['salary']) }}</td>
                 </tr>
@@ -116,7 +151,7 @@
         </div>
 
         <div class="back-link">
-            <a href="{{ route('staff') }}">スタッフ一覧に戻る</a>
+            <a href="{{ route('attendanceList', ['companyId' => $employee->company_id]) }}">出勤簿一覧に戻る</a>
         </div>
     </div>
 </body>

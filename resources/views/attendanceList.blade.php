@@ -67,6 +67,35 @@
         .back-btn:hover {
             opacity: 0.9;
         }
+
+        .error-icon {
+            color: #dc3545;
+            font-weight: bold;
+            margin-left: 5px;
+            font-size: 1.2em;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .error-icon::after {
+            content: "打刻エラーあり";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 120%; /* ビックリマークの上に表示 */
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            display: none; /* デフォルトは非表示 */
+            color: red;
+        }
+
+        .error-icon:hover::after {
+            display: block; /* ホバー時に表示 */
+        }
     </style>
 </head>
 <body>
@@ -85,7 +114,12 @@
             <tbody>
                 @foreach ($employees as $employee)
                 <tr>
-                    <td>{{ $employee['name'] }}</td>
+                    <td>
+                        @if ($employee->hasErrors)
+                            <span class="error-icon">&#33;</span>
+                        @endif
+                        {{ $employee['name'] }}
+                    </td>
                     <td>{{ $employee['attendanceDays'] }}</td>
                     <td>{{ $employee['totalWorkHours'] }} 時間</td>
                     <td>¥{{ number_format($employee['totalSalary']) }}</td>

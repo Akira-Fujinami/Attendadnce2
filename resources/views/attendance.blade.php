@@ -125,7 +125,9 @@
                     }
                 @endphp
                 <tr>
-                    <td>{{ $date }}</td>
+                    <td>
+                        <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $date }}</a>
+                    </td>
                     <td>
                         @if($workStart)
                             {{ \Carbon\Carbon::parse($workStart->minutes)->format('H:i') }}

@@ -112,6 +112,16 @@
             cursor: not-allowed; /* ポインターを無効化表示 */
             opacity: 0.65; /* 半透明 */
         }
+        .error-link {
+            color: #dc3545; /* 赤色 */
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .error-link:hover {
+            text-decoration: underline;
+            opacity: 0.8; /* マウスホバー時に少し透明感を追加 */
+        }
     </style>
 </head>
 <body>
@@ -154,6 +164,14 @@
         <input type="hidden" name="wage" value="{{ Auth::user()->hourly_wage }}">
         <input type="hidden" name="transportation" value="{{ Auth::user()->transportation_fee }}">
     </form>
+    @foreach($data['errors'] as $error)
+        <li>
+            <a href="{{ route('editAttendance', ['date' => $error['date'], 'employeeId' => Auth::User()->id]) }}" class="error-link">
+                {{ $error['date'] }}: {{ is_array($error['error']) ? implode(', ', $error['error']) : $error['error'] }}
+            </a>
+        </li>
+    @endforeach
+
 </div>
 
     </div>

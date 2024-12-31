@@ -122,6 +122,43 @@
         .logout .button:hover {
             background-color: #c82333;
         }
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .filter-form label {
+            font-size: 1em;
+            color: #333;
+        }
+
+        .filter-form select {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .error-link {
+            color: #dc3545; /* 赤色 */
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .error-link:hover {
+            text-decoration: underline;
+            opacity: 0.8; /* マウスホバー時に少し透明感を追加 */
+        }
     </style>
 </head>
 <body>
@@ -134,7 +171,18 @@
         </div>
         <a href="{{ route('staffCreate') }}" class="add-staff-btn">新しいスタッフを追加</a>
         <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id]) }}" class="add-staff-btn">出勤簿</a>
-        <h1>スタッフ一覧</h1>
+        <div class="header">
+            <h1>スタッフ一覧</h1>
+            <form method="GET" action="{{ route('staff') }}" class="filter-form">
+                <label for="status">ステータス:</label>
+                <select id="status" name="status" onchange="this.form.submit()">
+                    <option value="すべて" {{ $currentStatus === 'すべて' ? 'selected' : '' }}>すべて</option>
+                    <option value="在職中" {{ $currentStatus === '在職中' ? 'selected' : '' }}>在職中</option>
+                    <option value="休職中" {{ $currentStatus === '休職中' ? 'selected' : '' }}>休職中</option>
+                    <option value="退職済み" {{ $currentStatus === '退職済み' ? 'selected' : '' }}>退職済み</option>
+                </select>
+            </form>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -164,6 +212,15 @@
                 @endforeach
             </tbody>
         </table>
+        <ul>
+            @foreach ($employee->errors as $employeeName => $error)
+            <li>
+                <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id]) }}" class="error-link">
+                    {{ $employeeName }}: {{ is_array($error) ? implode(', ', $error) : $error }}
+                </a>
+            </li>
+            @endforeach
+        </ul>
         <footer>© 2024 勤怠管理システム. All Rights Reserved.</footer>
     </div>
 </body>
