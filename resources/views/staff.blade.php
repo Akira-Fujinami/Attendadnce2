@@ -19,6 +19,7 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         h1 {
@@ -96,49 +97,71 @@
             margin-top: 20px;
             color: #666;
         }
+
+        .logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .logout form {
+            display: inline;
+        }
+
+        .logout .button {
+            font-size: 1em;
+            padding: 10px 15px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .logout .button:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="logout">
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="button">ログアウト</button>
+            </form>
+        </div>
         <a href="{{ route('staffCreate') }}" class="add-staff-btn">新しいスタッフを追加</a>
-        <a href="{{ route('attendance3') }}" class="add-staff-btn">出勤簿</a>
-        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
-            @csrf
-            <button type="submit" class="add-staff-btn">ログアウト</button>
-        </form>
+        <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id]) }}" class="add-staff-btn">出勤簿</a>
         <h1>スタッフ一覧</h1>
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>名前</th>
+                    <th>メール</th>
                     <th>勤務状況</th>
-                    <th>アクション</th>
-                    <th>出勤簿</th>
+                    <th>詳細</th>
                 </tr>
             </thead>
             <tbody>
+                @foreach ($EmployeeList as $employee)
                 <tr>
-                    <td>001</td>
-                    <td>山田 太郎</td>
-                    <td><span class="status status-working">勤務中</span></td>
-                    <td><a href="{{ route('staffDetail') }}" class="button">詳細を見る</a></td>
-                    <td><a href="{{ route('attendance2') }}" class="button">出勤簿を見る</a></td>
+                    <td>{{ $employee->name }}</td>
+                    <td>{{ $employee->email }}</td>
+                    <td>
+                        <span class="status 
+                            @if ($employee->retired === '在職中') status-working
+                            @elseif ($employee->retired === '休職中') status-break
+                            @elseif ($employee->retired === '退職済み') status-retired
+                            @endif
+                        ">
+                            {{ $employee->retired }}
+                        </span>
+                    </td>
+                    <td><a href="{{ route('staffDetail', ['employeeId' => $employee->id, 'companyId' => $employee->company_id]) }}" class="button">詳細を見る</a></td>
                 </tr>
-                <tr>
-                    <td>002</td>
-                    <td>佐藤 花子</td>
-                    <td><span class="status status-break">休憩中</span></td>
-                    <td><a href="#">詳細を見る</a></td>
-                    <td><a href="#">出勤簿を見る</a></td>
-                </tr>
-                <tr>
-                    <td>003</td>
-                    <td>鈴木 次郎</td>
-                    <td><span class="status status-retired">退勤</span></td>
-                    <td><a href="#">詳細を見る</a></td>
-                    <td><a href="#">出勤簿を見る</a></td>
-                </tr>
+                @endforeach
             </tbody>
         </table>
         <footer>© 2024 勤怠管理システム. All Rights Reserved.</footer>

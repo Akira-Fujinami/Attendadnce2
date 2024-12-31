@@ -37,10 +37,68 @@
         .summary p {
             margin: 0;
         }
+        .return-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        .return-button button {
+            font-size: 1em;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .return-button button:hover {
+            background-color: #0056b3;
+        }
+        .logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .logout form {
+            display: inline;
+        }
+
+        .logout .button {
+            font-size: 1em;
+            padding: 10px 15px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .logout .button:hover {
+            background-color: #c82333;
+        }
+
     </style>
 </head>
 <body>
+    <!-- 打刻画面へのリンク -->
+    <div class="return-button">
+        <button onclick="location.href='{{ route('adit') }}'">打刻画面に戻る</button>
+    </div>
+        <!-- ログアウトボタン -->
+    <div class="logout">
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <button type="submit" class="button">ログアウト</button>
+        </form>
+    </div>
     <h1>出勤簿</h1>
+    <div class="info">
+        <p><strong>スタッフ名:</strong> {{ $name }}</p>
+        <p><strong>総労働時間:</strong> {{ number_format($totalWorkHours, 2) }} 時間</p>
+        <p><strong>総休憩時間:</strong> {{ number_format($totalBreakHours, 2) }} 時間</p>
+    </div>
     <table>
         <thead>
             <tr>
@@ -53,21 +111,60 @@
         </thead>
         <tbody>
             @foreach ($dates as $date)
-            <tr>
-                <td>{{ $date }}</td>
-                <td>
-                    @if(isset($attendanceRecords[$date]) && $attendanceRecords[$date]->adit_item === 'work_start')
-                        {{ \Carbon\Carbon::parse($attendanceRecords[$date]->minutes)->format('H:i') }}
-                    @endif
-                </td>
-                <td>
-                    @if(isset($attendanceRecords[$date]) && $attendanceRecords[$date]->adit_item === 'work_end')
-                        {{ \Carbon\Carbon::parse($attendanceRecords[$date]->minutes)->format('H:i') }}
-                    @endif
-                </td>
-                <td>{{ $attendanceRecords[$date]->work_hours ?? '0.00' }} 時間</td>
-                <td>{{ $attendanceRecords[$date]->break_hours ?? '0.00' }} 時間</td>
-            </tr>
+                @php
+                    $workStart = null;
+                    $workEnd = null;
+                    $breakStart = null;
+                    $breakEnd = null;
+                    
+                    if (isset($attendanceRecords[$date])) {
+                        $workStart = $attendanceRecords[$date]->firstWhere('adit_item', 'work_start');
+                        $workEnd = $attendanceRecords[$date]->firstWhere('adit_item', 'work_end');
+                        $breakStart = $attendanceRecords[$date]->firstWhere('adit_item', 'break_start');
+                        $breakEnd = $attendanceRecords[$date]->firstWhere('adit_item', 'break_end');
+                    }
+                @endphp
+                <tr>
+                    <td>{{ $date }}</td>
+                    <td>
+                        @if($workStart)
+                            {{ \Carbon\Carbon::parse($workStart->minutes)->format('H:i') }}
+                        @endif
+                    </td>
+                    <td>
+                        @if($workEnd)
+                            {{ \Carbon\Carbon::parse($workEnd->minutes)->format('H:i') }}
+                        @endif
+                    </td>
+                    <td>
+                        @if($workStart && $workEnd)
+                            @php
+                                $totalMinutes = \Carbon\Carbon::parse($workStart->minutes)->diffInMinutes(\Carbon\Carbon::parse($workEnd->minutes));
+                                $hours = floor($totalMinutes / 60);
+                                
+                                $minutes = $totalMinutes % 60;
+                                $formattedHours = $hours + ($minutes / 100); // 分を60分率で計算
+                            @endphp
+                            {{ number_format($formattedHours, 2) }} 時間
+                        @else
+                            0.00 時間
+                        @endif
+                    </td>
+                    <td>
+                        @if($breakStart && $breakEnd)
+                            @php
+                                $totalMinutes = \Carbon\Carbon::parse($breakStart->minutes)->diffInMinutes(\Carbon\Carbon::parse($breakEnd->minutes));
+                                $hours = floor($totalMinutes / 60);
+                                
+                                $minutes = $totalMinutes % 60;
+                                $formattedHours = $hours + ($minutes / 100); // 分を60分率で計算
+                            @endphp
+                            {{ number_format($formattedHours, 2) }} 時間
+                        @else
+                            0.00 時間
+                        @endif
+                    </td>
+                </tr>
             @endforeach
         </tbody>
     </table>

@@ -17,22 +17,10 @@ Route::get('/attendance', [AttendanceController::class, 'index'])->name('attenda
 Route::get('/change', function () {
     return view('change');
 })->name('change');
-Route::get('/staffDetail', function () {
-    return view('staffDetail');
-})->name('staffDetail');
-Route::get('/staffEdit', function () {
-    return view('staffEdit');
-})->name('staffEdit');
 Route::get('/staffCreate', function () {
     return view('staffCreate');
 })->name('staffCreate');
 Route::post('/employeeCreate', [StaffController::class, 'create'])->name('employeeCreate');
-Route::get('/attendance2', function () {
-    return view('attendance2');
-})->name('attendance2');
-Route::get('/attendance3', function () {
-    return view('attendance3');
-})->name('attendance3');
 Route::get('/passwordReset', function () {
     return view('passwordReset');
 })->name('passwordReset');
@@ -51,11 +39,14 @@ Route::get('/login', function () {
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::middleware(['auth'])->group(function () {
     Route::get('/staff', [StaffController::class, 'index'])->name('staff');
+    Route::get('/staffDetail', [StaffController::class, 'detail'])->name('staffDetail');
+    Route::get('/staffEdit', [StaffController::class, 'edit'])->name('staffEdit');
+    Route::put('/staff/update/{id}', [StaffController::class, 'update'])->name('staffUpdate');
+    Route::get('/attendanceList', [AttendanceController::class, 'attendanceList'])->name('attendanceList');
+    Route::get('/attendanceDetail/{employeeId}', [AttendanceController::class, 'attendanceDetail'])->name('attendanceDetail');
 });
 Route::middleware('auth:employees')->group(function () {
-    Route::get('/adit', function () {
-        return view('adit');
-    })->name('adit');
+    Route::get('/adit', [AditController::class, 'index'])->name('adit');
 });
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::post('/adit', [AditController::class, 'adit'])->name('adit');

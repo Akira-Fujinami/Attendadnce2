@@ -99,36 +99,40 @@
 <body>
     <div class="container">
         <h1>スタッフ編集画面</h1>
-        <form>
+        <form action="{{ route('staffUpdate', ['id' => $employee->id]) }}" method="POST">
+            @csrf
+            @method('PUT')
+
             <label for="name">名前</label>
-            <input type="text" id="name" value="山田 太郎">
+            <input type="text" id="name" name="name" value="{{ $employee->name }}">
 
             <label for="email">メールアドレス</label>
-            <input type="email" id="email" value="yamada.taro@example.com">
+            <input type="email" id="email" name="email" value="{{ $employee->email }}">
 
             <label for="password">パスワード</label>
-            <input type="password" id="password" value="password123">
+            <input type="password" id="password" name="password" placeholder="パスワードを変更する場合入力">
 
-            <label for="name">交通費</label>
-            <input type="text" id="name" value="￥1000">
+            <label for="transportation_fee">交通費</label>
+            <input type="text" id="transportation_fee" name="transportation_fee" value="{{ $employee->transportation_fee }}">
 
-            <label for="name">時給</label>
-            <input type="text" id="name" value="￥1100">
+            <label for="hourly_wage">時給</label>
+            <input type="text" id="hourly_wage" name="hourly_wage" value="{{ $employee->hourly_wage }}">
 
-            <label for="status">在籍状況</label>
-            <select id="status">
-                <option value="active" selected>在籍中</option>
-                <option value="inactive">退職済み</option>
+            <label for="retired">在籍状況</label>
+            <select id="retired" name="retired">
+                <option value="在職中" {{ $employee->retired === '在職中' ? 'selected' : '' }}>在職中</option>
+                <option value="休職中" {{ $employee->retired === '休職中' ? 'selected' : '' }}>休職中</option>
+                <option value="退職済み" {{ $employee->retired === '退職済み' ? 'selected' : '' }}>退職済み</option>
             </select>
 
             <div class="form-actions">
                 <button type="submit" class="save-btn">保存する</button>
-                <button type="button" class="cancel-btn" onclick="window.location.href='{{ route('staffDetail') }}';">キャンセル</button>
+                <button type="button" class="cancel-btn" onclick="window.location.href='{{ route('staffDetail', ['id' => $employee->id]) }}';">キャンセル</button>
             </div>
         </form>
 
         <div class="back-link">
-            <a href="{{ route('staff') }}" class="button">スタッフ一覧に戻る</a>
+            <a href="{{ route('staff') }}">スタッフ一覧に戻る</a>
         </div>
     </div>
 </body>

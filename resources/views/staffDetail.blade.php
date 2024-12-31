@@ -39,24 +39,6 @@
             color: #555;
         }
 
-        .password-section {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .password-section span {
-            font-size: 1.2em;
-            color: #555;
-            margin-right: 10px;
-        }
-
-        .password-section button {
-            padding: 5px 10px;
-            font-size: 0.9em;
-            cursor: pointer;
-        }
-
         .status {
             padding: 10px 20px;
             color: #fff;
@@ -66,6 +48,10 @@
 
         .status-active {
             background-color: #28a745;
+        }
+
+        .status-inactive {
+            background-color: #dc3545;
         }
 
         .action-buttons {
@@ -105,39 +91,37 @@
 
         <div class="detail-item">
             <span>名前:</span>
-            <span>山田 太郎</span>
+            <span>{{ $employee->name }}</span>
         </div>
 
         <div class="detail-item">
             <span>メールアドレス:</span>
-            <span>yamada.taro@example.com</span>
-        </div>
-
-        <div class="detail-item password-section">
-            <span>パスワード:</span>
-            <span>●●●●●●●</span>
+            <span>{{ $employee->email }}</span>
         </div>
 
         <div class="detail-item">
             <span>交通費:</span>
-            <span>￥1000</span>
+            <span>￥{{ number_format($employee->transportation_fee) }}</span>
         </div>
 
         <div class="detail-item">
             <span>時給:</span>
-            <span>￥1100</span>
+            <span>￥{{ number_format($employee->hourly_wage) }}</span>
         </div>
 
         <div class="detail-item">
             <span>在籍状況:</span>
-            <span class="status status-active">在籍中</span>
+            <span class="status 
+                {{ $employee->retired === '在職中' ? 'status-active' : 'status-inactive' }}">
+                {{ $employee->retired }}
+            </span>
         </div>
 
         <div class="action-buttons">
-            <a href="{{ route('staffEdit') }}" class="button">編集する</a>
+            <a href="{{ route('staffEdit', ['employeeId' => $employee->id, 'companyId' => $employee->company_id]) }}" class="button">編集する</a>
         </div>
 
-        <a href="{{ route('staff') }}" class="button">スタッフ一覧に戻る</a>
+        <a href="{{ route('staff') }}" class="back-link">スタッフ一覧に戻る</a>
     </div>
 </body>
 </html>

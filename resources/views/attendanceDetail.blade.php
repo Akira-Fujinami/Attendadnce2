@@ -87,56 +87,36 @@
         <h1>スタッフ出勤簿</h1>
 
         <div class="staff-info">
-            <p>名前: 山田 太郎</p>
-            <p>メール: yamada.taro@example.com</p>
+            <p>名前: {{ $employee->name }}</p>
+            <p>メール: {{ $employee->email }}</p>
         </div>
 
         <table>
             <thead>
                 <tr>
                     <th>日付</th>
-                    <th>出勤時間</th>
-                    <th>退勤時間</th>
-                    <th>休憩時間</th>
                     <th>労働時間</th>
-                    <th>給与 (時給: ¥1500)</th>
+                    <th>給与</th>
                 </tr>
             </thead>
             <tbody>
+                @foreach ($attendanceData as $data)
                 <tr>
-                    <td>2024-12-01</td>
-                    <td>09:00</td>
-                    <td>17:00</td>
-                    <td>1 時間</td>
-                    <td>7.00 時間</td>
-                    <td>¥10,500</td>
+                    <td>{{ $data['date'] }}</td>
+                    <td>{{ $data['work_hours'] }} 時間</td>
+                    <td>¥{{ number_format($data['salary']) }}</td>
                 </tr>
-                <tr>
-                    <td>2024-12-02</td>
-                    <td>10:00</td>
-                    <td>18:00</td>
-                    <td>0.5 時間</td>
-                    <td>7.50 時間</td>
-                    <td>¥11,250</td>
-                </tr>
-                <tr>
-                    <td>2024-12-03</td>
-                    <td>09:30</td>
-                    <td>16:30</td>
-                    <td>1 時間</td>
-                    <td>6.00 時間</td>
-                    <td>¥9,000</td>
-                </tr>
+                @endforeach
             </tbody>
         </table>
 
         <div class="summary">
-            <p>総労働時間: <span>20.50 時間</span></p>
-            <p>総給与: <span>¥30,750</span></p>
+            <p>総労働時間: <span>{{ $totalWorkHours }} 時間</span></p>
+            <p>総給与: <span>¥{{ number_format($totalSalary) }}</span></p>
         </div>
 
         <div class="back-link">
-            <a href="{{ route('staff') }}" class="button">スタッフ一覧に戻る</a>
+            <a href="{{ route('staff') }}">スタッフ一覧に戻る</a>
         </div>
     </div>
 </body>

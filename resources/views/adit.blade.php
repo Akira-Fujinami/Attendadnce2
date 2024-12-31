@@ -105,6 +105,13 @@
         .logout .button:hover {
             background-color: #c82333;
         }
+
+        .button[disabled] {
+            background-color: #6c757d; /* グレー色 */
+            color: #fff; /* テキスト色 */
+            cursor: not-allowed; /* ポインターを無効化表示 */
+            opacity: 0.65; /* 半透明 */
+        }
     </style>
 </head>
 <body>
@@ -122,22 +129,33 @@
     </div>
 
     <div class="container">
+            <div style="margin-top: 20px; font-size: 1.5em;
+            @if($data['latestAdit'] == 'work_start') color: #28a745; 
+               @elseif($data['latestAdit'] == 'break_start') color: #ffc107
+               @elseif($data['latestAdit'] == 'break_end') color: #28a745
+               @elseif($data['latestAdit'] == 'work_end') color: #dc3545 
+               @endif">
+                {{$data['status']}}
+            </div>
         <h1>現在の時間</h1>
         <div class="time-display" id="current-time">
             <!-- 時間がここに表示されます -->
         </div>
 
         <div class="button-group">
-            <form action="{{ route('adit') }}" method="POST">
-                @csrf
-                <button type="submit" name="adit_item" value="work_start" class="button button-green">出勤</button>
-                <button type="submit" name="adit_item" value="break_start" class="button button-yellow">休憩開始</button>
-                <button type="submit" name="adit_item" value="break_end" class="button button-blue">休憩終了</button>
-                <button type="submit" name="adit_item" value="work_end" class="button button-red">退勤</button>
-                <input type="hidden" name="employee_id" value="{{ Auth::user()->id }}">
-                <input type="hidden" name="company_id" value="{{ Auth::user()->company_id }}">
-            </form>
-        </div>
+    <form action="{{ route('adit') }}" method="POST">
+        @csrf
+        <button type="submit" name="adit_item" value="work_start" class="button button-green" @if($data['aditExists'] or $data['latestAdit'] == 'work_end') disabled @endif>出勤</button>
+        <button type="submit" name="adit_item" value="break_start" class="button button-yellow" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end') disabled @endif>休憩開始</button>
+        <button type="submit" name="adit_item" value="break_end" class="button button-blue" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end') disabled @endif>休憩終了</button>
+        <button type="submit" name="adit_item" value="work_end" class="button button-red" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end') disabled @endif>退勤</button>
+        <input type="hidden" name="employee_id" value="{{ Auth::user()->id }}">
+        <input type="hidden" name="company_id" value="{{ Auth::user()->company_id }}">
+        <input type="hidden" name="wage" value="{{ Auth::user()->hourly_wage }}">
+        <input type="hidden" name="transportation" value="{{ Auth::user()->transportation_fee }}">
+    </form>
+</div>
+
     </div>
 
     <script>

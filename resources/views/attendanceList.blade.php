@@ -75,7 +75,6 @@
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>名前</th>
                     <th>出勤日数</th>
                     <th>総労働時間</th>
@@ -84,30 +83,15 @@
                 </tr>
             </thead>
             <tbody>
+                @foreach ($employees as $employee)
                 <tr>
-                    <td>001</td>
-                    <td>山田 太郎</td>
-                    <td>20</td>
-                    <td>160時間</td>
-                    <td>¥240,000</td>
-                    <td><a href="{{ route('attendance2') }}" class="view-link">詳細</a></td>
+                    <td>{{ $employee['name'] }}</td>
+                    <td>{{ $employee['attendanceDays'] }}</td>
+                    <td>{{ $employee['totalWorkHours'] }} 時間</td>
+                    <td>¥{{ number_format($employee['totalSalary']) }}</td>
+                    <td><a href="{{ route('attendanceDetail', ['employeeId' => $employee['id']]) }}" class="view-link">詳細</a></td>
                 </tr>
-                <tr>
-                    <td>002</td>
-                    <td>佐藤 花子</td>
-                    <td>18</td>
-                    <td>144時間</td>
-                    <td>¥216,000</td>
-                    <td><a href="attendance_detail.html?id=002" class="view-link">詳細</a></td>
-                </tr>
-                <tr>
-                    <td>003</td>
-                    <td>鈴木 次郎</td>
-                    <td>22</td>
-                    <td>176時間</td>
-                    <td>¥264,000</td>
-                    <td><a href="attendance_detail.html?id=003" class="view-link">詳細</a></td>
-                </tr>
+                @endforeach
             </tbody>
         </table>
         <a href="{{ route('staff') }}" class="back-btn">戻る</a>
