@@ -79,6 +79,35 @@
             background-color: #c82333;
         }
 
+        .error-icon {
+            color: #dc3545;
+            font-weight: bold;
+            margin-left: 5px;
+            font-size: 1.2em;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .error-icon::after {
+            content: "未承認の打刻です";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 120%; /* ビックリマークの上に表示 */
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            display: none; /* デフォルトは非表示 */
+            color: red;
+        }
+
+        .error-icon:hover::after {
+            display: block; /* ホバー時に表示 */
+        }
+
     </style>
 </head>
 <body>
@@ -118,14 +147,19 @@
                     $breakEnd = null;
                     
                     if (isset($attendanceRecords[$date])) {
-                        $workStart = $attendanceRecords[$date]->firstWhere('adit_item', 'work_start');
-                        $workEnd = $attendanceRecords[$date]->firstWhere('adit_item', 'work_end');
-                        $breakStart = $attendanceRecords[$date]->firstWhere('adit_item', 'break_start');
-                        $breakEnd = $attendanceRecords[$date]->firstWhere('adit_item', 'break_end');
+                        $dailyRecords = collect($attendanceRecords[$date]);
+                        $workStart = $dailyRecords->firstWhere('adit_item', 'work_start');
+                        $workEnd = $dailyRecords->firstWhere('adit_item', 'work_end');
+                        $breakStart = $dailyRecords->firstWhere('adit_item', 'break_start');
+                        $breakEnd = $dailyRecords->firstWhere('adit_item', 'break_end');
                     }
+                    $recordData = $attendanceRecords[$date] ?? null;
                 @endphp
                 <tr>
                     <td>
+                        @if ($recordData && $recordData['has_pending'])
+                            <span class="error-icon">&#33;</span>
+                        @endif
                         <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $date }}</a>
                     </td>
                     <td>

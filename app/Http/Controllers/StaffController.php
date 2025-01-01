@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
+use App\Models\Adit;
 use App\Models\DailySummary;
 use Illuminate\Support\Facades\Hash;
 
@@ -31,7 +32,25 @@ class StaffController extends Controller
                 ->get()
                 ->pluck('error_types', 'employee.name') // 名前をキーにする
                 ->toArray();
+                // dd($errors);
             $employee->errors = $errors;
+            $pendingRecords = Adit::where('employee_id', $employee->id)
+            ->where('company_id', $user->id)
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('date') // 日付ごとにグループ化
+            ->map(function ($records, $date) {
+                $latestRecord = $records->first(); // 最新の未承認打刻
+                return [
+                    'date' => $latestRecord->date,
+                    'name' => $latestRecord->employee->name ?? '未設定',
+                    'status' => $latestRecord->status,
+                ];
+            })
+            ->values() // 配列として保持
+            ->toArray();
+            $employee->pendingRecords = $pendingRecords;
         }
 
         return view('staff', [

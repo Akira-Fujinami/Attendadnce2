@@ -30,21 +30,33 @@ class AttendanceController extends Controller
 
         // データベースから打刻情報を取得
         $attendanceRecords = Adit::where('employee_id', $employeeId)
-                                ->where('company_id', $companyId)
-                                ->whereBetween('date', [reset($dates), end($dates)])
-                                ->get()
-                                ->groupBy('date');
-                                // dd($attendanceRecords);
-        
+                            ->where('company_id', $companyId)
+                            ->whereBetween('date', [reset($dates), end($dates)])
+                            ->whereIn('status', ['approved', 'pending'])
+                            ->orderBy('created_at', 'desc') // 最新の順に並べる
+                            ->get()
+                            ->groupBy('date') // 日付ごとにグループ化
+                            ->map(function ($records, $date) {
+                                $latestRecord = $records->first(); // 各グループで最新のレコード
+                                $hasPending = $records->contains('status', 'pending'); // statusがpendingのものがあるか
+                        
+                                return [
+                                    'latest_record' => $latestRecord,
+                                    'has_pending' => $hasPending,
+                                ];
+                            });
+                            // dd($attendanceRecords);
+
         $totalWorkHours = 0;
         $totalBreakHours = 0;
         
         foreach ($dates as $date) {
             if (isset($attendanceRecords[$date])) {
-                $workStart = $attendanceRecords[$date]->firstWhere('adit_item', 'work_start');
-                $workEnd = $attendanceRecords[$date]->firstWhere('adit_item', 'work_end');
-                $breakStart = $attendanceRecords[$date]->firstWhere('adit_item', 'break_start');
-                $breakEnd = $attendanceRecords[$date]->firstWhere('adit_item', 'break_end');
+                $dailyRecords = collect($attendanceRecords[$date]);
+                $workStart = $dailyRecords->firstWhere('adit_item', 'work_start');
+                $workEnd = $dailyRecords->firstWhere('adit_item', 'work_end');
+                $breakStart = $dailyRecords->firstWhere('adit_item', 'break_start');
+                $breakEnd = $dailyRecords->firstWhere('adit_item', 'break_end');
         
                 if ($workStart && $workEnd) {
                     $totalWorkHours += \Carbon\Carbon::parse($workStart->minutes)->diffInMinutes(\Carbon\Carbon::parse($workEnd->minutes));
@@ -148,15 +160,32 @@ class AttendanceController extends Controller
         $employeeId = $request->input('employeeId');
     
         // 該当する従業員とその日付の打刻データを取得
-        $attendanceRecords = Adit::where('employee_id', $employeeId)
+        // 該当する従業員とその日付の打刻データを取得
+        $records = Adit::where('employee_id', $employeeId)
             ->whereDate('date', $date)
+            ->where('deleted', false)
+            ->whereIn('status', ['approved', 'pending'])
+            ->orderBy('created_at', 'asc') // 古い順にソート
             ->get();
+
+        // 修正前と修正後を分ける
+        $previousRecord = null;
+        $currentRecord = null;
+
+        if ($records->count() > 1) {
+            $previousRecord = $records->where('status', 'approved')->last();  // 最新から2番目
+            $currentRecord = $records->last(); // 最新のレコード
+        } elseif ($records->count() === 1) {
+            $currentRecord = $records->first(); // 修正後として設定
+            // dd($currentRecord );
+        }
     
         // Bladeに渡すデータ
         $data = [
             'date' => $date,
             'employeeId' => $employeeId,
-            'attendanceRecords' => $attendanceRecords,
+            'previousRecord' => $previousRecord,
+            'currentRecord' => $currentRecord,
         ];
     
         // editAttendanceビューを表示
@@ -180,34 +209,34 @@ class AttendanceController extends Controller
             'break_start' => $request->break_start,
             'break_end' => $request->break_end,
         ];
-    
+        $aditItems = array_filter($aditItems, function ($time) {
+            return !is_null($time);
+        });
+
         foreach ($aditItems as $aditItem => $time) {
             if ($time) {
-                Adit::updateOrCreate(
-                    [
-                        'employee_id' => $request->employeeId,
-                        'company_id' => $request->companyId,
-                        'date' => $request->date,
-                        'adit_item' => $aditItem,
-                    ],
-                    [
-                        'minutes' => \Carbon\Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $time),
-                        'status' => 'approved', // 必要に応じてステータスを設定
-                    ]
-                );
+                Adit::create([
+                    'company_id' => $request->companyId,
+                    'employee_id' => $request->employeeId,
+                    'date' => $request->date,
+                    'minutes' => \Carbon\Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $time),
+                    'adit_item' => $aditItem,
+                    'status' => 'pending',
+                ]);
             } else {
                 // 該当する打刻データを削除（空の場合）
-                Adit::where('employee_id', $request->employeeId)
-                    ->where('company_id', $request->companyId)
-                    ->where('date', $request->date)
-                    ->where('adit_item', $aditItem)
-                    ->delete();
+                Adit::create([
+                    'company_id' => $request->companyId,
+                    'employee_id' => $request->employeeId,
+                    'date' => $request->date,
+                    'minutes' => null,
+                    'adit_item' => $aditItem,
+                    'status' => 'pending',
+                    'deleted' => 1
+                ]);
             }
         }
     
-        return redirect()->route('attendance', [
-            'company_id' => $request->companyId,
-            'employee_id' => $request->employeeId
-            ]);
+        return back();
     }    
 }

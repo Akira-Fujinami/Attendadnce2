@@ -35,12 +35,9 @@ class AditController extends Controller
                 $status = '退勤済み';
             }
         }
-        $startOfMonth = Carbon::now()->startOfMonth()->toDateString(); // 月初
-        $endOfMonth = Carbon::now()->endOfMonth()->toDateString();     // 月末
     
         $errorSummaries = DailySummary::where('company_id', $user->company_id)
         ->where('employee_id', $user->id)
-        ->whereBetween('date', [$startOfMonth, $endOfMonth])
         ->whereNotNull('error_types') // エラーがあるデータのみ取得
         ->get();
 
@@ -52,7 +49,13 @@ class AditController extends Controller
                     ? implode(', ', $summary->error_types)
                     : $summary->error_types,
             ];
-        });
+        })->toArray();
+        if ($latestAdit && $latestAdit->status === 'pending') {
+            $errors[] = [
+                'date' => $latestAdit->date,
+                'error' => '未承認の打刻があります',
+            ];
+        }
         // dd($errors);
         
 

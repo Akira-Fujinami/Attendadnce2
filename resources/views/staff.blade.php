@@ -220,6 +220,13 @@
                 </a>
             </li>
             @endforeach
+            @foreach ($employee->pendingRecords as $pendingRecord)
+                <li>
+                    <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id]) }}" class="error-link">
+                        {{ $employeeName }}: {{ $pendingRecord['date'] }} - 未承認の打刻があります
+                    </a>
+                </li>
+            @endforeach
         </ul>
         <footer>© 2024 勤怠管理システム. All Rights Reserved.</footer>
     </div>

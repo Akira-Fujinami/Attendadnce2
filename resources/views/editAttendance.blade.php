@@ -13,7 +13,7 @@
         }
 
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -27,22 +27,21 @@
             margin-bottom: 20px;
         }
 
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-size: 1em;
-            margin-bottom: 5px;
-        }
-
-        input[type="time"] {
-            padding: 10px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
             margin-bottom: 20px;
+        }
+
+        th, td {
             border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1em;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
         }
 
         button {
@@ -70,36 +69,91 @@
         .cancel-btn:hover {
             background-color: #5a6268;
         }
+        .error-icon {
+            color: #dc3545;
+            font-weight: bold;
+            margin-left: 5px;
+            font-size: 1.2em;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .error-icon::after {
+            content: "未承認の打刻です";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 120%; /* ビックリマークの上に表示 */
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            display: none; /* デフォルトは非表示 */
+            color: red;
+        }
+
+        .error-icon:hover::after {
+            display: block; /* ホバー時に表示 */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>打刻修正画面</h1>
-        <form method="POST" action="{{ route('updateAttendance') }}">
-            @csrf
-            <input type="hidden" name="date" value="{{ $date }}">
-            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
-            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
 
-            <label for="work_start">出勤時間</label>
-            <input type="time" id="work_start" name="work_start" 
-                   value="{{ $attendanceRecords->where('adit_item', 'work_start')->first() ? \Carbon\Carbon::parse($attendanceRecords->where('adit_item', 'work_start')->first()->minutes)->format('H:i') : '' }}">
+        <table>
+            <thead>
+                <tr>
+                    <th>項目</th>
+                    <th>修正前</th>
+                    <th>修正後</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $labels = [
+                        'work_start' => '出勤時間',
+                        'work_end' => '退勤時間',
+                        'break_start' => '休憩開始',
+                        'break_end' => '休憩終了',
+                    ];
+                @endphp
 
-            <label for="work_end">退勤時間</label>
-            <input type="time" id="work_end" name="work_end" 
-                   value="{{ $attendanceRecords->where('adit_item', 'work_end')->first() ? \Carbon\Carbon::parse($attendanceRecords->where('adit_item', 'work_end')->first()->minutes)->format('H:i') : '' }}">
+                @foreach (['work_start', 'work_end', 'break_start', 'break_end'] as $aditItem)
+                    <tr>
+                        <td>
+                            @if ($currentRecord && $currentRecord->adit_item === $aditItem && $currentRecord->status === 'pending')
+                                <span class="error-icon">&#33;</span>
+                            @endif
+                            {{ $labels[$aditItem] }}
+                        </td>
+                        <td>
+                            @if ($previousRecord && $previousRecord->adit_item === $aditItem)
+                                {{ \Carbon\Carbon::parse($previousRecord->minutes)->format('H:i') }}
+                            @else
+                                未登録
+                            @endif
+                        </td>
+                        <td>
+                            <form method="POST" action="{{ route('updateAttendance') }}">
+                                @csrf
+                                <input type="hidden" name="date" value="{{ $date }}">
+                                <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                                <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                                <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                                <input type="time" name="{{ $aditItem }}" 
+                                    value="{{ $currentRecord && $currentRecord->adit_item === $aditItem ? \Carbon\Carbon::parse($currentRecord->minutes)->format('H:i') : '' }}">
+                                <button type="submit" class="save-btn">保存</button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
 
-            <label for="break_start">休憩開始時間</label>
-            <input type="time" id="break_start" name="break_start" 
-                   value="{{ $attendanceRecords->where('adit_item', 'break_start')->first() ? \Carbon\Carbon::parse($attendanceRecords->where('adit_item', 'break_start')->first()->minutes)->format('H:i') : '' }}">
-
-            <label for="break_end">休憩終了時間</label>
-            <input type="time" id="break_end" name="break_end" 
-                   value="{{ $attendanceRecords->where('adit_item', 'break_end')->first() ? \Carbon\Carbon::parse($attendanceRecords->where('adit_item', 'break_end')->first()->minutes)->format('H:i') : '' }}">
-
-            <button type="submit" class="save-btn">保存</button>
-            <button type="button" class="cancel-btn" onclick="window.history.back()">キャンセル</button>
-        </form>
+        <button type="button" class="cancel-btn" onclick="window.history.back()">キャンセル</button>
     </div>
 </body>
 </html>
