@@ -130,6 +130,10 @@
 <body>
     <div class="container">
         <h1>スタッフ出勤簿一覧</h1>
+        <a href="{{ route('attendance.export', ['companyId' => Auth::user()->id, 'year' => $currentYear, 'month' => $currentMonth]) }}" class="btn btn-primary">
+            エクセルを出力
+        </a>
+
         <div class="month-navigation">
             <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id, 'year' => $currentYear, 'month' => $currentMonth - 1]) }}" class="nav-button">前の月</a>
             <span>{{ $currentYear }}年 {{ $currentMonth }}月</span>

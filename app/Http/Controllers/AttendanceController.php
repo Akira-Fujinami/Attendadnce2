@@ -8,6 +8,7 @@ use App\Models\Adit;
 use App\Models\Employee;
 use App\Models\DailySummary;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Response;
 
 class AttendanceController extends Controller
 {
@@ -305,4 +306,67 @@ class AttendanceController extends Controller
     
         return back();
     }
+
+    public function exportAttendanceList(Request $request)
+    {
+        $currentYear = $request->input('year', now()->year);
+        $currentMonth = $request->input('month', now()->month);
+    
+        // データ取得（同じロジックを再利用）
+        $startDate = now()->startOfMonth()->toDateString();
+        $endDate = now()->endOfMonth()->toDateString();
+    
+        $employees = Employee::where('company_id', $request->companyId)->get();
+        $data = [];
+    
+        foreach ($employees as $employee) {
+            $summary = DailySummary::where('company_id', $request->companyId)
+                ->where('employee_id', $employee->id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->selectRaw('SUM(total_work_hours) as totalWorkHours, COUNT(date) as attendanceDays, SUM(salary) as totalSalary')
+                ->first();
+    
+            $data[] = [
+                'name' => $employee->name,
+                'attendanceDays' => $summary->attendanceDays ?? 0,
+                'totalWorkHours' => $summary->totalWorkHours ?? 0,
+                'totalSalary' => $summary->totalSalary ?? 0,
+            ];
+        }
+    
+        // ヘッダー行を含むデータを準備
+        $csvData = [];
+        $csvData[] = ['名前', '出勤日数', '総労働時間', '総給与'];
+    
+        foreach ($data as $row) {
+            $csvData[] = [
+                $row['name'],
+                $row['attendanceDays'],
+                $row['totalWorkHours'],
+                '¥' . number_format($row['totalSalary']),
+            ];
+        }
+    
+        // CSVを出力
+        $currentDateTime = now()->format('Ymd_His'); // 例: 20231231_123456
+        $fileName = "attendance_list_{$currentDateTime}.csv";
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$fileName\"",
+        ];
+        // dd($data);
+    
+        $callback = function () use ($csvData) {
+            $file = fopen('php://output', 'w');
+            // UTF-8 BOMを追加
+            fwrite($file, "\xEF\xBB\xBF"); // UTF-8 BOMを追加
+            foreach ($csvData as $line) {
+                fputcsv($file, $line); // UTF-8のまま出力
+            }
+            fclose($file);
+        };
+        return response()->stream($callback, 200, $headers);
+    }
+    
+
 }

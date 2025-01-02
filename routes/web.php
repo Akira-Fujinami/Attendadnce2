@@ -47,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/appliedAdit/{companyId}', [AppliedAditController::class, 'index'])->name('appliedAdit');
     Route::post('/adit/approve', [AppliedAditController::class, 'approveAdit'])->name('adit.approve');
     Route::post('/adit/reject', [AppliedAditController::class, 'rejectAdit'])->name('adit.reject');
+    Route::get('/attendance/export', [AttendanceController::class, 'exportAttendanceList'])->name('attendance.export');
 });
 Route::middleware('auth:employees')->group(function () {
     Route::get('/adit', [AditController::class, 'index'])->name('adit');

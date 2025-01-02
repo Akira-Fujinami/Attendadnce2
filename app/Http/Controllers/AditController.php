@@ -133,7 +133,9 @@ class AditController extends Controller
         $workStart = Adit::where('employee_id', $employeeId)
             ->where('company_id', $companyId)
             ->where('adit_item', 'work_start')
-            ->whereDate('created_at', $date)
+            ->whereDate('date', $date)
+            ->where('status', 'approved')
+            ->where('deleted', 0)
             ->orderBy('created_at', 'asc')
             ->first();
         // dd($workStart);
@@ -141,7 +143,9 @@ class AditController extends Controller
         $workEnd = Adit::where('employee_id', $employeeId)
             ->where('company_id', $companyId)
             ->where('adit_item', 'work_end')
-            ->whereDate('created_at', $date)
+            ->whereDate('date', $date)
+            ->where('status', 'approved')
+            ->where('deleted', 0)
             ->orderBy('created_at', 'desc')
             ->first();
             // dd($workEnd);
@@ -161,13 +165,17 @@ class AditController extends Controller
     {
         $breakStart = Adit::where('employee_id', $employeeId)
             ->where('adit_item', 'break_start')
-            ->whereDate('created_at', $date)
+            ->whereDate('date', $date)
+            ->where('status', 'approved')
+            ->where('deleted', 0)
             ->orderBy('created_at', 'asc')
             ->first();
 
         $breakEnd = Adit::where('employee_id', $employeeId)
             ->where('adit_item', 'break_end')
-            ->whereDate('created_at', $date)
+            ->whereDate('date', $date)
+            ->where('status', 'approved')
+            ->where('deleted', 0)
             ->orderBy('created_at', 'desc')
             ->first();
             // dd($breakEnd);
