@@ -156,9 +156,9 @@
     <form action="{{ route('adit') }}" method="POST">
         @csrf
         <button type="submit" name="adit_item" value="work_start" class="button button-green" @if($data['aditExists'] or $data['latestAdit'] == 'work_end') disabled @endif>出勤</button>
-        <button type="submit" name="adit_item" value="break_start" class="button button-yellow" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end') disabled @endif>休憩開始</button>
-        <button type="submit" name="adit_item" value="break_end" class="button button-blue" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end') disabled @endif>休憩終了</button>
-        <button type="submit" name="adit_item" value="work_end" class="button button-red" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end') disabled @endif>退勤</button>
+        <button type="submit" name="adit_item" value="break_start" class="button button-yellow" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end' or $data['latestAdit'] == 'break_start') disabled @endif>休憩開始</button>
+        <button type="submit" name="adit_item" value="break_end" class="button button-blue" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end' or $data['latestAdit'] == 'work_start' or $data['latestAdit'] == 'break_end') disabled @endif>休憩終了</button>
+        <button type="submit" name="adit_item" value="work_end" class="button button-red" @if(!$data['aditExists'] or $data['latestAdit'] == 'work_end' or $data['latestAdit'] == 'break_start') disabled @endif>退勤</button>
         <input type="hidden" name="employee_id" value="{{ Auth::user()->id }}">
         <input type="hidden" name="company_id" value="{{ Auth::user()->company_id }}">
         <input type="hidden" name="wage" value="{{ Auth::user()->hourly_wage }}">

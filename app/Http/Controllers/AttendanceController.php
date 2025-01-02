@@ -20,9 +20,22 @@ class AttendanceController extends Controller
         $dates = [];
         $now = Carbon::now('Asia/Tokyo');
 
+        $year = $request->input('year', Carbon::now()->year);
+        $month = $request->input('month', Carbon::now()->month);
+    
+        // 月が0以下なら前の年の12月にする
+        if ($month < 1) {
+            $year--;
+            $month = 12;
+        }
+    
+        if ($month > 12) {
+            $year++;
+            $month = 1;
+        }
         // 月初と月末を設定
-        $start = $now->copy()->startOfMonth();
-        $end = $now->copy()->endOfMonth();
+        $start = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
 
         for ($date = $start; $date->lte($end); $date->addDay()) {
             $dates[] = $date->format('Y-m-d');
@@ -82,13 +95,30 @@ class AttendanceController extends Controller
             'employeeId' => $employeeId,
             'totalWorkHours' => $totalWorkHours,
             'totalBreakHours' => $totalBreakHours,
+            'currentYear' => $year,
+            'currentMonth' => $month,
         ]);
     }
 
     public function attendanceList(Request $request)
     {
-        $startDate = now()->startOfMonth()->toDateString(); // 月初 (例: 2024-12-01)
-        $endDate = now()->endOfMonth()->toDateString(); 
+        $year = $request->input('year', now()->year);
+        $month = $request->input('month', now()->month);
+    
+        // 月が0以下なら前年の12月にする
+        if ($month < 1) {
+            $year--;
+            $month = 12;
+        }
+    
+        // 月が13以上なら翌年の1月にする
+        if ($month > 12) {
+            $year++;
+            $month = 1;
+        }
+    
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->toDateString(); // 月初
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString(); 
         // 全スタッフの出勤情報を取得
         $employees = Employee::where('company_id', $request->companyId)->get();
         foreach ($employees as $employee) {
@@ -111,17 +141,32 @@ class AttendanceController extends Controller
         }
 
         // データをBladeに渡す
-        return view('attendanceList', ['employees' => $employees]);
+        return view('attendanceList', [
+            'employees' => $employees,
+            'currentYear' => $year,
+            'currentMonth' => $month,
+        ]);
     }
 
-    public function attendanceDetail($employeeId)
+    public function attendanceDetail($employeeId, $year, $month)
     {
         // スタッフ情報を取得
         $employee = Employee::findOrFail($employeeId);
 
+        if ($month < 1) {
+            $year--;
+            $month = 12;
+        }
+    
+        // 月が13以上なら翌年の1月にする
+        if ($month > 12) {
+            $year++;
+            $month = 1;
+        }
+    
         // 月初と月末の日付を取得
-        $startDate = now()->startOfMonth()->toDateString();
-        $endDate = now()->endOfMonth()->toDateString();
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->toDateString();
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
 
         // DailySummaries テーブルからデータを取得
         $summaries = DailySummary::where('employee_id', $employeeId)

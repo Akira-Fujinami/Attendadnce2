@@ -108,6 +108,36 @@
             display: block; /* ホバー時に表示 */
         }
 
+        .month-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+    .month-navigation .nav-button {
+        padding: 10px 15px;
+        margin: 0 10px;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+
+    .month-navigation .nav-button:hover {
+        background-color: #0056b3;
+    }
+
+    .month-navigation .current-month {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #007bff;
+    }
+
     </style>
 </head>
 <body>
@@ -123,6 +153,12 @@
         </form>
     </div>
     <h1>出勤簿</h1>
+    <div class="month-navigation">
+        <a href="{{ route('attendance', ['employee_id' => $employeeId, 'company_id' => Auth::user()->company_id, 'year' => $currentYear, 'month' => $currentMonth - 1]) }}" class="nav-button">◀ 前の月</a>
+        <span class="current-month">{{ $currentYear }}年 {{ $currentMonth }}月</span>
+        <a href="{{ route('attendance', ['employee_id' => $employeeId, 'company_id' => Auth::user()->company_id, 'year' => $currentYear, 'month' => $currentMonth + 1]) }}" class="nav-button">次の月 ▶</a>
+    </div>
+
     <div class="info">
         <p><strong>スタッフ名:</strong> {{ $name }}</p>
         <p><strong>総労働時間:</strong> {{ number_format($totalWorkHours, 2) }} 時間</p>

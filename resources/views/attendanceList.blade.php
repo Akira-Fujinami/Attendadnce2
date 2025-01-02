@@ -96,11 +96,46 @@
         .error-icon:hover::after {
             display: block; /* ホバー時に表示 */
         }
+        .month-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .month-navigation .nav-button {
+            padding: 10px 15px;
+            margin: 0 10px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .month-navigation .nav-button:hover {
+            background-color: #0056b3;
+        }
+
+        .month-navigation .current-month {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>スタッフ出勤簿一覧</h1>
+        <div class="month-navigation">
+            <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id, 'year' => $currentYear, 'month' => $currentMonth - 1]) }}" class="nav-button">前の月</a>
+            <span>{{ $currentYear }}年 {{ $currentMonth }}月</span>
+            <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id, 'year' => $currentYear, 'month' => $currentMonth + 1]) }}" class="nav-button">次の月</a>
+        </div>
+
         <table>
             <thead>
                 <tr>
@@ -123,7 +158,10 @@
                     <td>{{ $employee['attendanceDays'] }}</td>
                     <td>{{ $employee['totalWorkHours'] }} 時間</td>
                     <td>¥{{ number_format($employee['totalSalary']) }}</td>
-                    <td><a href="{{ route('attendanceDetail', ['employeeId' => $employee['id']]) }}" class="view-link">詳細</a></td>
+                    <td>
+                        <a href="{{ route('attendanceDetail', ['employeeId' => $employee['id'], 'year' => $currentYear, 'month' => $currentMonth]) }}" class="view-link">詳細</a>
+                    </td>
+
                 </tr>
                 @endforeach
             </tbody>

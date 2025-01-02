@@ -43,7 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/staffEdit', [StaffController::class, 'edit'])->name('staffEdit');
     Route::put('/staff/update/{id}', [StaffController::class, 'update'])->name('staffUpdate');
     Route::get('/attendanceList', [AttendanceController::class, 'attendanceList'])->name('attendanceList');
-    Route::get('/attendanceDetail/{employeeId}', [AttendanceController::class, 'attendanceDetail'])->name('attendanceDetail');
+    Route::get('/attendanceDetail/{employeeId}/{year}/{month}', [AttendanceController::class, 'attendanceDetail'])->name('attendanceDetail');
     Route::get('/appliedAdit/{companyId}', [AppliedAditController::class, 'index'])->name('appliedAdit');
     Route::post('/adit/approve', [AppliedAditController::class, 'approveAdit'])->name('adit.approve');
     Route::post('/adit/reject', [AppliedAditController::class, 'rejectAdit'])->name('adit.reject');

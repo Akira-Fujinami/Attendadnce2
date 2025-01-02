@@ -16,11 +16,11 @@ class AditController extends Controller
         $today = Carbon::today()->toDateString(); // 本日の日付を取得（フォーマット：Y-m-d）
 
         // Adit_logsテーブルからadit_itemがwork_startのデータを取得
-        $aditExists = Adit::whereDate('created_at', $today)
+        $aditExists = Adit::whereDate('date', $today)
             ->where('employee_id', $user->id)
             ->where('company_id', $user->company_id)
             ->exists();
-        $latestAdit = Adit::whereDate('created_at', $today)
+        $latestAdit = Adit::whereDate('date', $today)
             ->orderBy('created_at', 'desc') // 最新順にソート
             ->first();
         $status = null;
@@ -106,13 +106,6 @@ class AditController extends Controller
     
         $expectedOrder = ['work_start', 'break_start', 'break_end', 'work_end'];
         $currentOrder = $aditRecords->toArray();
-        if (!$this->isCorrectOrder($currentOrder, $expectedOrder)) {
-            $errorType = '打刻が正しくされていません。';
-            // DailySummary にエラーを更新
-            $dailySummary->update([
-                'error_types' => $errorType,
-            ]);
-        }
         
         $today = now()->format('Y-m-d');
         $aditExists = Adit::whereDate('created_at', $today)
@@ -133,24 +126,6 @@ class AditController extends Controller
             ]);
         }
         return redirect()->route('adit');
-    }
-
-    private function isCorrectOrder(array $currentOrder, array $expectedOrder): bool
-    {
-        $index = 0;
-
-        foreach ($currentOrder as $item) {
-            if ($item === $expectedOrder[$index]) {
-                $index++;
-                if ($index >= count($expectedOrder)) {
-                    break;
-                }
-            } elseif (!in_array($item, $expectedOrder)) {
-                return false; // 不正なアイテムが存在する場合
-            }
-        }
-
-        return $index === count($expectedOrder);
     }
 
     protected function calculateWorkHours($companyId, $employeeId, $date)
