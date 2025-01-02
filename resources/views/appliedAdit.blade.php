@@ -94,6 +94,15 @@
 <body>
     <div class="container">
         <h1>未承認打刻一覧</h1>
+        <div class="filter-dropdown" style="text-align: center; margin-bottom: 20px;">
+            <form action="{{ route('appliedAdit', ['companyId' => Auth::user()->id]) }}" method="GET" id="filterForm">
+                <select name="status" id="statusFilter" onchange="document.getElementById('filterForm').submit()" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                    <option value="pending" {{ $currentStatus === 'pending' ? 'selected' : '' }}>未承認</option>
+                    <option value="rejected" {{ $currentStatus === 'rejected' ? 'selected' : '' }}>却下済み</option>
+                </select>
+            </form>
+        </div>
+
 
         @if (!empty($pendingRecords))
             <table>
@@ -138,8 +147,11 @@
                                     <input type="hidden" name="employee_id" value="{{ $record['id'] }}">
                                     <input type="hidden" name="date" value="{{ $record['minutes'] }}">
                                     <input type="hidden" name="adit_item" value="{{ $record['adit_item'] }}">
+                                    <input type="hidden" name="wage" value="{{ $record['hourly_wage'] }}">
+                                    <input type="hidden" name="transportation" value="{{ $record['transportation_fee'] }}">
                                     <button type="submit" class="btn btn-approve">承認</button>
                                 </form>
+                                @if($currentStatus != 'rejected')
                                 <form method="POST" action="{{ route('adit.reject') }}">
                                     @csrf
                                     <input type="hidden" name="company_id" value="{{ Auth::user()->id }}">
@@ -148,6 +160,7 @@
                                     <input type="hidden" name="adit_item" value="{{ $record['adit_item'] }}">
                                     <button type="submit" class="btn btn-reject">却下</button>
                                 </form>
+                                @endif
                             </td>
                         </tr>
                         @endforeach
@@ -155,7 +168,11 @@
                 </tbody>
             </table>
         @else
-            <p>未承認の打刻はありません。</p>
+            @if($currentStatus == 'rejected')
+            <p>却下済みの打刻はありません。</p>
+            @elseif($currentStatus == 'pending')
+                <p>未承認の打刻はありません。</p>
+            @endif
         @endif
 
         <a href="{{ route('staff') }}" class="back-button">スタッフ一覧に戻る</a>

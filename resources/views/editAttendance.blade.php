@@ -110,8 +110,8 @@
 </head>
 <body>
     <div class="container">
+    <h2 style="text-align: center; margin-bottom: 20px;">{{ $year }}年 {{ $month }}月</h2> 
         <h1>打刻修正画面</h1>
-
         <table>
             <thead>
                 <tr>

@@ -98,17 +98,7 @@ class AditController extends Controller
             ]
         );
         $today = now()->format('Y-m-d');
-        $aditRecords = Adit::where('company_id', $request->company_id)
-                            ->where('employee_id', $request->employee_id)
-                            ->where('date', $today)
-                            ->orderBy('minutes')
-                            ->pluck('adit_item');
-    
-        $expectedOrder = ['work_start', 'break_start', 'break_end', 'work_end'];
-        $currentOrder = $aditRecords->toArray();
-        
-        $today = now()->format('Y-m-d');
-        $aditExists = Adit::whereDate('created_at', $today)
+        $aditExists = Adit::whereDate('date', $today)
                         ->where('company_id', $request->company_id)
                         ->where('employee_id', $request->employee_id)
                         ->exists();
@@ -128,7 +118,7 @@ class AditController extends Controller
         return redirect()->route('adit');
     }
 
-    protected function calculateWorkHours($companyId, $employeeId, $date)
+    public static function calculateWorkHours($companyId, $employeeId, $date)
     {
         $workStart = Adit::where('employee_id', $employeeId)
             ->where('company_id', $companyId)
@@ -161,7 +151,7 @@ class AditController extends Controller
         return 0;
     }
 
-    protected function calculateBreakHours($companyId, $employeeId, $date)
+    public static function calculateBreakHours($companyId, $employeeId, $date)
     {
         $breakStart = Adit::where('employee_id', $employeeId)
             ->where('adit_item', 'break_start')
@@ -189,7 +179,7 @@ class AditController extends Controller
         return 0;
     }
 
-    protected function calculateSalary($wage, $transportation, $totalWorkHours, $totalBreakHours)
+    public static function calculateSalary($wage, $transportation, $totalWorkHours, $totalBreakHours)
     {
         // 実働時間を計算
         $actualWorkHours = $totalWorkHours - $totalBreakHours;

@@ -176,65 +176,65 @@
         </thead>
         <tbody>
             @foreach ($dates as $date)
-                @php
-                    $workStart = null;
-                    $workEnd = null;
-                    $breakStart = null;
-                    $breakEnd = null;
-                    
-                    if (isset($attendanceRecords[$date])) {
-                        $dailyRecords = collect($attendanceRecords[$date]);
-                        $workStart = $dailyRecords->firstWhere('adit_item', 'work_start');
-                        $workEnd = $dailyRecords->firstWhere('adit_item', 'work_end');
-                        $breakStart = $dailyRecords->firstWhere('adit_item', 'break_start');
-                        $breakEnd = $dailyRecords->firstWhere('adit_item', 'break_end');
-                    }
-                    $recordData = $attendanceRecords[$date] ?? null;
-                @endphp
+                    @php
+                        $recordsForDate = $attendanceRecords[$date] ?? null;
+
+                        // 各日付の打刻情報を初期化
+                        $workStart = $recordsForDate ? $recordsForDate['records']->firstWhere('adit_item', 'work_start') : null;
+                        $workEnd = $recordsForDate ? $recordsForDate['records']->firstWhere('adit_item', 'work_end') : null;
+                        $breakStart = $recordsForDate ? $recordsForDate['records']->firstWhere('adit_item', 'break_start') : null;
+                        $breakEnd = $recordsForDate ? $recordsForDate['records']->firstWhere('adit_item', 'break_end') : null;
+
+                        // 労働時間と休憩時間を計算
+                        $workHours = 0;
+                        $breakHours = 0;
+
+                        if ($workStart && $workEnd) {
+                            $workStartTime = \Carbon\Carbon::parse($workStart['minutes']);
+                            $workEndTime = \Carbon\Carbon::parse($workEnd['minutes']);
+                            $workMinutes = $workStartTime->diffInMinutes($workEndTime);
+
+                            $workHours = floor($workMinutes / 60) + ($workMinutes % 60) / 100; // 時間に変換
+                        }
+
+                        if ($breakStart && $breakEnd) {
+                            $breakStartTime = \Carbon\Carbon::parse($breakStart['minutes']);
+                            $breakEndTime = \Carbon\Carbon::parse($breakEnd['minutes']);
+                            $breakMinutes = $breakStartTime->diffInMinutes($breakEndTime);
+
+                            $breakHours = floor($breakMinutes / 60) + ($breakMinutes % 60) / 100; // 時間に変換
+                        }
+                    @endphp
                 <tr>
                     <td>
-                        @if ($recordData && $recordData['has_pending'])
+                        @if ($recordsForDate && $recordsForDate['has_pending'])
                             <span class="error-icon">&#33;</span>
                         @endif
                         <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $date }}</a>
                     </td>
                     <td>
-                        @if($workStart)
-                            {{ \Carbon\Carbon::parse($workStart->minutes)->format('H:i') }}
+                        @if ($recordsForDate)
+                            @foreach ($recordsForDate['records'] as $record)
+                                @if ($record['adit_item'] === 'work_start')
+                                    {{ \Carbon\Carbon::parse($record['minutes'])->format('H:i') }}
+                                @endif
+                            @endforeach
                         @endif
                     </td>
                     <td>
-                        @if($workEnd)
-                            {{ \Carbon\Carbon::parse($workEnd->minutes)->format('H:i') }}
+                        @if ($recordsForDate)
+                            @foreach ($recordsForDate['records'] as $record)
+                                @if ($record['adit_item'] === 'work_end')
+                                    {{ \Carbon\Carbon::parse($record['minutes'])->format('H:i') }}
+                                @endif
+                            @endforeach
                         @endif
                     </td>
                     <td>
-                        @if($workStart && $workEnd)
-                            @php
-                                $totalMinutes = \Carbon\Carbon::parse($workStart->minutes)->diffInMinutes(\Carbon\Carbon::parse($workEnd->minutes));
-                                $hours = floor($totalMinutes / 60);
-                                
-                                $minutes = $totalMinutes % 60;
-                                $formattedHours = $hours + ($minutes / 100); // 分を60分率で計算
-                            @endphp
-                            {{ number_format($formattedHours, 2) }} 時間
-                        @else
-                            0.00 時間
-                        @endif
+                        {{ number_format($workHours, 2) }} 時間
                     </td>
                     <td>
-                        @if($breakStart && $breakEnd)
-                            @php
-                                $totalMinutes = \Carbon\Carbon::parse($breakStart->minutes)->diffInMinutes(\Carbon\Carbon::parse($breakEnd->minutes));
-                                $hours = floor($totalMinutes / 60);
-                                
-                                $minutes = $totalMinutes % 60;
-                                $formattedHours = $hours + ($minutes / 100); // 分を60分率で計算
-                            @endphp
-                            {{ number_format($formattedHours, 2) }} 時間
-                        @else
-                            0.00 時間
-                        @endif
+                        {{ number_format($breakHours, 2) }} 時間
                     </td>
                 </tr>
             @endforeach

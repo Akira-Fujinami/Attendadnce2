@@ -46,56 +46,68 @@ class AttendanceController extends Controller
         $attendanceRecords = Adit::where('employee_id', $employeeId)
                             ->where('company_id', $companyId)
                             ->whereBetween('date', [reset($dates), end($dates)])
-                            ->whereIn('status', ['approved', 'pending'])
+                            ->where('status', 'approved')
                             ->orderBy('created_at', 'desc') // 最新の順に並べる
                             ->get()
                             ->groupBy('date') // 日付ごとにグループ化
                             ->map(function ($records, $date) {
-                                $latestRecord = $records->first(); // 各グループで最新のレコード
-                                $hasPending = $records->contains('status', 'pending'); // statusがpendingのものがあるか
-                        
+                                // `$records` の中に pending ステータスがあるかを確認
+                                $hasPending = $records->contains(function ($record) {
+                                    return $record->status === 'pending';
+                                });
+
+                                $mappedRecords = $records->map(function ($record) {
+                                    return [
+                                        'id' => $record->id,
+                                        'date' => $record->date,
+                                        'status' => $record->status,
+                                        'minutes' => $record->minutes,
+                                        'adit_item' => $record->adit_item,
+                                        'employee_id' => $record->employee_id,
+                                    ];
+                                });
+
+                                // 各日付グループに `has_pending` を追加
                                 return [
-                                    'latest_record' => $latestRecord,
                                     'has_pending' => $hasPending,
+                                    'records' => $mappedRecords,
                                 ];
                             });
+
+    
+    
                             // dd($attendanceRecords);
 
         $totalWorkHours = 0;
         $totalBreakHours = 0;
-        
-        foreach ($dates as $date) {
-            if (isset($attendanceRecords[$date])) {
-                $dailyRecords = collect($attendanceRecords[$date]);
-                $workStart = $dailyRecords->firstWhere('adit_item', 'work_start');
-                $workEnd = $dailyRecords->firstWhere('adit_item', 'work_end');
-                $breakStart = $dailyRecords->firstWhere('adit_item', 'break_start');
-                $breakEnd = $dailyRecords->firstWhere('adit_item', 'break_end');
-        
-                if ($workStart && $workEnd) {
-                    $totalWorkHours += \Carbon\Carbon::parse($workStart->minutes)->diffInMinutes(\Carbon\Carbon::parse($workEnd->minutes));
-                    $hours = floor($totalWorkHours / 60);
-                                
-                    $minutes = $totalWorkHours % 60;
-                    $totalWorkHours = $hours + ($minutes / 100);
-                }
-        
-                if ($breakStart && $breakEnd) {
-                    $totalBreakHours += \Carbon\Carbon::parse($breakStart->minutes)->diffInMinutes(\Carbon\Carbon::parse($breakEnd->minutes));
-                    $breakHours = floor($totalWorkHours / 60);
-                                
-                    $breakMinutes = $totalBreakHours % 60;
-                    $totalBreakHours = $breakHours + ($breakMinutes / 100);
-                }
-            }
+
+        // 月初と月末の日付を取得
+        $startDate = reset($dates); // $dates[0] が月初の日付
+        $endDate = end($dates);     // $dates の最後が月末の日付
+
+        // `daily_summaries` テーブルから月初から月末までのデータを取得
+        $summaries = DailySummary::where('employee_id', $employeeId)
+            ->where('company_id', $companyId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get();
+
+        // 各データを加算
+        foreach ($summaries as $summary) {
+            $totalWorkHours += $summary->total_work_hours;
+            $totalBreakHours += $summary->total_break_hours;
         }
+
+        // 必要に応じてフォーマットを調整
+        $totalWorkHoursFormatted = floor($totalWorkHours) + ($totalWorkHours % 1) * 100 / 60; // 時間:分をフォーマット
+        $totalBreakHoursFormatted = floor($totalBreakHours) + ($totalBreakHours % 1) * 100 / 60;
+        // dd($attendanceRecords);
         return view('attendance', [
             'dates' => $dates,
             'attendanceRecords' => $attendanceRecords,
             'name' => $employeeName,
             'employeeId' => $employeeId,
-            'totalWorkHours' => $totalWorkHours,
-            'totalBreakHours' => $totalBreakHours,
+            'totalWorkHours' => $totalWorkHoursFormatted,
+            'totalBreakHours' => $totalBreakHoursFormatted,
             'currentYear' => $year,
             'currentMonth' => $month,
         ]);
@@ -211,6 +223,7 @@ class AttendanceController extends Controller
             ->whereIn('status', ['approved', 'pending'])
             ->orderBy('created_at', 'asc') // 古い順にソート
             ->get();
+            // dd($records);
 
         // 出勤、休憩開始、休憩終了、退勤に分ける
         $aditItems = ['work_start', 'break_start', 'break_end', 'work_end'];
@@ -219,25 +232,21 @@ class AttendanceController extends Controller
         foreach ($aditItems as $item) {
             $filteredRecords = $records->where('adit_item', $item);
             // dd($filteredRecords);
-            if ($filteredRecords->count() === 1) {
-                $data[$item] = [
-                    'previousRecord' => $filteredRecords->where('status', 'approved')->last(), // 最新の承認済み
-                    'currentRecord' => $filteredRecords->where('status', 'pending')->last(), // 最新のレコード
-                ];
-               
-            } else {
-                $data[$item] = [
-                    'previousRecord' => null,
-                    'currentRecord' => null,
-                ];
-            }
+            $data[$item] = [
+                'previousRecord' => $filteredRecords->where('status', 'approved')->last(), // 最新の承認済み
+                'currentRecord' => $filteredRecords->where('status', 'pending')->last(), // 最新のレコード
+            ];
         }
+        $year = Carbon::parse($date)->year;   // 2025
+        $month = Carbon::parse($date)->month; 
 
         // Bladeに渡すデータ
         return view('editAttendance', [
             'date' => $date,
             'employeeId' => $employeeId,
             'records' => $data,
+            'year' => $year,
+            'month' => $month,
         ]);
     }
 
