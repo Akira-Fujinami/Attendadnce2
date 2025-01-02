@@ -158,39 +158,43 @@ class AttendanceController extends Controller
         // リクエストから日付と従業員IDを取得
         $date = $request->input('date');
         $employeeId = $request->input('employeeId');
-    
-        // 該当する従業員とその日付の打刻データを取得
+
         // 該当する従業員とその日付の打刻データを取得
         $records = Adit::where('employee_id', $employeeId)
             ->whereDate('date', $date)
-            ->where('deleted', false)
             ->whereIn('status', ['approved', 'pending'])
             ->orderBy('created_at', 'asc') // 古い順にソート
             ->get();
 
-        // 修正前と修正後を分ける
-        $previousRecord = null;
-        $currentRecord = null;
+        // 出勤、休憩開始、休憩終了、退勤に分ける
+        $aditItems = ['work_start', 'break_start', 'break_end', 'work_end'];
+        $data = [];
 
-        if ($records->count() > 1) {
-            $previousRecord = $records->where('status', 'approved')->last();  // 最新から2番目
-            $currentRecord = $records->last(); // 最新のレコード
-        } elseif ($records->count() === 1) {
-            $currentRecord = $records->first(); // 修正後として設定
-            // dd($currentRecord );
+        foreach ($aditItems as $item) {
+            $filteredRecords = $records->where('adit_item', $item);
+            // dd($filteredRecords);
+            if ($filteredRecords->count() === 1) {
+                $data[$item] = [
+                    'previousRecord' => $filteredRecords->where('status', 'approved')->last(), // 最新の承認済み
+                    'currentRecord' => $filteredRecords->where('status', 'pending')->last(), // 最新のレコード
+                ];
+               
+            } else {
+                $data[$item] = [
+                    'previousRecord' => null,
+                    'currentRecord' => null,
+                ];
+            }
         }
-    
+
         // Bladeに渡すデータ
-        $data = [
+        return view('editAttendance', [
             'date' => $date,
             'employeeId' => $employeeId,
-            'previousRecord' => $previousRecord,
-            'currentRecord' => $currentRecord,
-        ];
-    
-        // editAttendanceビューを表示
-        return view('editAttendance', $data);
+            'records' => $data,
+        ]);
     }
+
     public function updateAttendance(Request $request)
     {
         $validatedData = $request->validate([
@@ -209,12 +213,39 @@ class AttendanceController extends Controller
             'break_start' => $request->break_start,
             'break_end' => $request->break_end,
         ];
+    
+        // 入力データから null を除外
         $aditItems = array_filter($aditItems, function ($time) {
             return !is_null($time);
         });
-
-        foreach ($aditItems as $aditItem => $time) {
-            if ($time) {
+    
+        // 対象のレコードを取得
+        $attendanceRecord = Adit::where('employee_id', $request->employeeId)
+            ->where('company_id', $request->companyId)
+            ->whereDate('date', $request->date)
+            ->where('adit_item', $request->adit_item)
+            ->where('status', 'pending')
+            ->first();
+    
+        if ($attendanceRecord) {
+            if (empty($aditItems)) {
+                // 入力データが空の場合、削除フラグを設定
+                // dd($attendanceRecord);
+                $attendanceRecord->update([
+                    'deleted' => 1,
+                ]);
+            } else {
+                // 既存レコードがある場合は更新
+                foreach ($aditItems as $aditItem => $time) {
+                    $attendanceRecord->update([
+                        'minutes' => \Carbon\Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $time),
+                        'deleted' => 0, // 削除フラグをリセット
+                    ]);
+                }
+            }
+        } else {
+            // レコードが存在しない場合は新規作成
+            foreach ($aditItems as $aditItem => $time) {
                 Adit::create([
                     'company_id' => $request->companyId,
                     'employee_id' => $request->employeeId,
@@ -222,21 +253,11 @@ class AttendanceController extends Controller
                     'minutes' => \Carbon\Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $time),
                     'adit_item' => $aditItem,
                     'status' => 'pending',
-                ]);
-            } else {
-                // 該当する打刻データを削除（空の場合）
-                Adit::create([
-                    'company_id' => $request->companyId,
-                    'employee_id' => $request->employeeId,
-                    'date' => $request->date,
-                    'minutes' => null,
-                    'adit_item' => $aditItem,
-                    'status' => 'pending',
-                    'deleted' => 1
+                    'deleted' => 0, // 削除フラグを初期化
                 ]);
             }
         }
     
         return back();
-    }    
+    }
 }

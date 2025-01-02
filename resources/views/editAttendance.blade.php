@@ -61,6 +61,15 @@
             background-color: #0056b3;
         }
 
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
         .cancel-btn {
             background-color: #6c757d;
             color: white;
@@ -69,6 +78,7 @@
         .cancel-btn:hover {
             background-color: #5a6268;
         }
+
         .error-icon {
             color: #dc3545;
             font-weight: bold;
@@ -83,19 +93,18 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            bottom: 120%; /* ビックリマークの上に表示 */
+            bottom: 120%;
             background-color: #333;
             color: #fff;
             padding: 5px 10px;
             border-radius: 5px;
             font-size: 0.9em;
             white-space: nowrap;
-            display: none; /* デフォルトは非表示 */
-            color: red;
+            display: none;
         }
 
         .error-icon:hover::after {
-            display: block; /* ホバー時に表示 */
+            display: block;
         }
     </style>
 </head>
@@ -107,7 +116,7 @@
             <thead>
                 <tr>
                     <th>項目</th>
-                    <th>修正前</th>
+                    <th>確定済みの打刻</th>
                     <th>修正後</th>
                 </tr>
             </thead>
@@ -121,17 +130,17 @@
                     ];
                 @endphp
 
-                @foreach (['work_start', 'work_end', 'break_start', 'break_end'] as $aditItem)
+                @foreach ($records as $aditItem => $record)
                     <tr>
                         <td>
-                            @if ($currentRecord && $currentRecord->adit_item === $aditItem && $currentRecord->status === 'pending')
+                            @if ($record['currentRecord'] && $record['currentRecord']->status === 'pending')
                                 <span class="error-icon">&#33;</span>
                             @endif
                             {{ $labels[$aditItem] }}
                         </td>
                         <td>
-                            @if ($previousRecord && $previousRecord->adit_item === $aditItem)
-                                {{ \Carbon\Carbon::parse($previousRecord->minutes)->format('H:i') }}
+                            @if ($record['previousRecord'])
+                                {{ \Carbon\Carbon::parse($record['previousRecord']->minutes)->format('H:i') }}
                             @else
                                 未登録
                             @endif
@@ -144,7 +153,7 @@
                                 <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
                                 <input type="hidden" name="adit_item" value="{{ $aditItem }}">
                                 <input type="time" name="{{ $aditItem }}" 
-                                    value="{{ $currentRecord && $currentRecord->adit_item === $aditItem ? \Carbon\Carbon::parse($currentRecord->minutes)->format('H:i') : '' }}">
+                                    value="{{ $record['currentRecord'] ? \Carbon\Carbon::parse($record['currentRecord']->minutes)->format('H:i') : '' }}">
                                 <button type="submit" class="save-btn">保存</button>
                             </form>
                         </td>
@@ -153,7 +162,9 @@
             </tbody>
         </table>
 
-        <button type="button" class="cancel-btn" onclick="window.history.back()">キャンセル</button>
+        <div class="navigation">
+        <a href="{{ route('attendance', ['company_id' => Auth::user()->company_id, 'employee_id' => Auth::user()->id]) }}" class="button">出勤簿へ遷移</a>
+    </div>
     </div>
 </body>
 </html>

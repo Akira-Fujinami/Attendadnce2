@@ -222,7 +222,7 @@
             @endforeach
             @foreach ($employee->pendingRecords as $pendingRecord)
                 <li>
-                    <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id]) }}" class="error-link">
+                    <a href="{{ route('appliedAdit', ['companyId' => Auth::User()->id]) }}" class="error-link">
                         {{ $employeeName }}: {{ $pendingRecord['date'] }} - 未承認の打刻があります
                     </a>
                 </li>
