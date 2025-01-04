@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Adit;
 use App\Models\DailySummary;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class StaffController extends Controller
 {
@@ -23,6 +24,8 @@ class StaffController extends Controller
         }
     
         // 従業員リストを取得
+        $lastMonthStart = Carbon::now()->subMonth()->startOfMonth()->toDateString();
+        $yesterday = Carbon::yesterday()->toDateString();
         $EmployeeList = $query->where('company_id', Auth::user()->id)->get();
         foreach ($EmployeeList as $employee) {
             $errors = DailySummary::where('company_id', $user->id)
@@ -51,7 +54,37 @@ class StaffController extends Controller
             ->values() // 配列として保持
             ->toArray();
             $employee->pendingRecords = $pendingRecords;
+
+            $aditRecords = Adit::whereBetween('date', [$lastMonthStart, $yesterday])
+            ->where('company_id', $user->id)
+            ->where('employee_id', $employee->id)
+            ->with('employee')
+            ->get()
+            ->groupBy('date');
+        
+            // 退勤打刻がない日付をチェック
+            $missingWorkEndDates = collect();
+            
+            foreach ($aditRecords as $date => $records) {
+                $workStartExists = $records->contains('adit_item', 'work_start');
+                $breakStartExists = $records->contains('adit_item', 'break_start');
+                $breakEndExists = $records->contains('adit_item', 'break_end');
+                $workEndExists = $records->contains('adit_item', 'work_end');
+            
+                if (($workStartExists || $breakStartExists || $breakEndExists) && !$workEndExists) {
+                    $missingWorkEndDates->push($date);
+                }
+            }
+
+            // 退勤打刻がない日付をエラーリストに追加
+            foreach ($missingWorkEndDates as $missingDate) {
+                $errors[$employee->name][] = '退勤打刻がありません (' . $missingDate . ')';
+            }
+        
+            // プロパティに追加
+            $employee->setAttribute('errors', $errors);
         }
+        // dd($EmployeeList);
 
         return view('staff', [
             'EmployeeList' => $EmployeeList,

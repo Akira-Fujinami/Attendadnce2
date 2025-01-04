@@ -32,10 +32,11 @@
             margin-bottom: 20px;
         }
 
-        .reset-container input[type="email"] {
+        .reset-container input[type="e-mail"],
+        .reset-container input[type="password"] {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin: 10px -9px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 1em;
@@ -68,16 +69,34 @@
         .reset-container a:hover {
             text-decoration: underline;
         }
+
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: green;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="reset-container">
         <h1>パスワードをリセット</h1>
-        <form action="/password-reset" method="POST">
-            <input type="email" name="email" placeholder="登録されたメールアドレス" required>
-            <button type="submit">リセットリンクを送信</button>
+        @if (session('success'))
+            <p class="success">{{ session('success') }}</p>
+        @endif
+        <form action="{{ route('password.reset') }}" method="POST">
+            @csrf
+            <input type="e-mail" name="mail" placeholder="メールアドレスを入力" required>
+            <input type="password" name="new_password" placeholder="新しいパスワード" required>
+            <input type="password" name="new_password_confirmation" placeholder="パスワードを確認" required>
+            <button type="submit">リセット</button>
         </form>
-        <a href="/login">ログイン画面に戻る こちら</a>
+        <a href="/login">ログイン画面に戻る</a>
     </div>
 </body>
 </html>

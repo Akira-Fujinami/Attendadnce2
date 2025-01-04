@@ -171,6 +171,7 @@
         </div>
         <a href="{{ route('staffCreate') }}" class="add-staff-btn">新しいスタッフを追加</a>
         <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id]) }}" class="add-staff-btn">出勤簿</a>
+        <a href="{{ route('appliedAdit', ['companyId' => Auth::User()->id]) }}" class="add-staff-btn">未承認打刻一覧</a>
         <div class="header">
             <h1>スタッフ一覧</h1>
             <form method="GET" action="{{ route('staff') }}" class="filter-form">
@@ -213,21 +214,34 @@
             </tbody>
         </table>
         <ul>
-            @foreach ($employee->errors as $employeeName => $error)
-            <li>
-                <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id]) }}" class="error-link">
-                    {{ $employeeName }}: {{ is_array($error) ? implode(', ', $error) : $error }}
-                </a>
-            </li>
-            @endforeach
-            @foreach ($employee->pendingRecords as $pendingRecord)
-                <li>
-                    <a href="{{ route('appliedAdit', ['companyId' => Auth::User()->id]) }}" class="error-link">
-                        {{ $employeeName }}: {{ $pendingRecord['date'] }} - 未承認の打刻があります
-                    </a>
-                </li>
+            @foreach ($EmployeeList as $employee)
+                @if (!empty($employee->errors))
+                    @foreach ($employee->errors as $employeeName => $errors)
+                        <li style="color: #dc3545; font-weight: bold; text-decoration: none;">
+                            {{ $employeeName }}:
+                            @if (is_array($errors))
+                                <br>
+                                @foreach ($errors as $error)
+                                    ・{{ $error }}<br>
+                                @endforeach
+                            @else
+                                {{ $errors }}
+                            @endif
+                        </li>
+                    @endforeach
+                @endif
+                @if (!empty($employee->pendingRecords))
+                    @foreach ($employee->pendingRecords as $pendingRecord)
+                        <li>
+                            <a href="{{ route('appliedAdit', ['companyId' => Auth::User()->id]) }}" class="error-link">
+                                {{ $employee->name }}: {{ $pendingRecord['date'] }} - 未承認の打刻があります
+                            </a>
+                        </li>
+                    @endforeach
+                @endif
             @endforeach
         </ul>
+
         <footer>© 2024 勤怠管理システム. All Rights Reserved.</footer>
     </div>
 </body>

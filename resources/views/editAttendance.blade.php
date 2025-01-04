@@ -112,6 +112,7 @@
     <div class="container">
     <h2 style="text-align: center; margin-bottom: 20px;">{{ $year }}年 {{ $month }}月</h2> 
         <h1>打刻修正画面</h1>
+        @if(!$disable)
         <table>
             <thead>
                 <tr>
@@ -161,6 +162,12 @@
                 @endforeach
             </tbody>
         </table>
+        @elseif ($disable)
+        <div style="text-align: center; margin: 20px 0; padding: 20px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px;">
+            <strong>この日付の打刻データは未来日の為、修正できません。</strong>
+        </div>
+        @endif
+
 
         <div class="navigation">
         <a href="{{ route('attendance', ['company_id' => Auth::user()->company_id, 'employee_id' => Auth::user()->id]) }}" class="button">出勤簿へ遷移</a>

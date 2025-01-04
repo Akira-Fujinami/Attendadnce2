@@ -24,7 +24,7 @@ class AppliedAditController extends Controller
                             ->groupBy('date') // 日付ごとにグループ化
                             ->map(function ($records) {
                                 return $records->map(function ($record) use ($records) {
-                                    $previousApproved = $records->where('status', 'approved')->where('adit_item', $record->adit_item)->last();
+                                    $previousApproved = Adit::where('employee_id', $record->employee_id)->where('date', $record->date)->where('status', 'approved')->where('adit_item', $record->adit_item)->first();
                         
                                     return [
                                         'date' => $record->date,

@@ -125,12 +125,37 @@
             font-weight: bold;
             color: #007bff;
         }
+
+        .excel-export-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #28a745; /* グリーン系の背景色 */
+            color: white; /* テキストは白 */
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.2em; /* 少し大きめのフォント */
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* ボタンの影 */
+        }
+
+        .excel-export-button:hover {
+            background-color: #218838; /* ホバー時に少し濃いグリーン */
+            transform: translateY(-2px); /* 少し浮き上がる */
+        }
+
+        .excel-export-button:active {
+            background-color: #1e7e34; /* クリック時の色 */
+            transform: translateY(0); /* 元に戻る */
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* 影を小さくする */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>スタッフ出勤簿一覧</h1>
-        <a href="{{ route('attendance.export', ['companyId' => Auth::user()->id, 'year' => $currentYear, 'month' => $currentMonth]) }}" class="btn btn-primary">
+        <a href="{{ route('attendance.export', ['companyId' => Auth::user()->id, 'year' => $currentYear, 'month' => $currentMonth]) }}" class="excel-export-button">
             エクセルを出力
         </a>
 

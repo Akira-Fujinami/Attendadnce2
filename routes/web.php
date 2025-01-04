@@ -57,4 +57,5 @@ Route::middleware('auth:employees')->group(function () {
     Route::post('/deleteAttendance', [AttendanceController::class, 'deleteAttendance'])->name('deleteAttendance');
 });
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::post('/resetPassword', [LoginController::class, 'resetPassword'])->name('password.reset');
 Route::post('/adit', [AditController::class, 'adit'])->name('adit');

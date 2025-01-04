@@ -56,6 +56,38 @@ class AditController extends Controller
                 'error' => '未承認の打刻があります',
             ];
         }
+
+        $lastMonthStart = Carbon::now()->subMonth()->startOfMonth()->toDateString();
+        $yesterday = Carbon::yesterday()->toDateString();
+        
+        // 対象期間の全ての `Adit` レコードを一度に取得
+        $aditRecords = Adit::whereBetween('date', [$lastMonthStart, $yesterday])
+            ->where('employee_id', $user->id)
+            ->where('company_id', $user->company_id)
+            ->get()
+            ->groupBy('date');
+        
+        // 退勤打刻がない日付をチェック
+        $missingWorkEndDates = collect();
+        
+        foreach ($aditRecords as $date => $records) {
+            $workStartExists = $records->contains('adit_item', 'work_start');
+            $breakStartExists = $records->contains('adit_item', 'break_start');
+            $breakEndExists = $records->contains('adit_item', 'break_end');
+            $workEndExists = $records->contains('adit_item', 'work_end');
+        
+            if (($workStartExists || $breakStartExists || $breakEndExists) && !$workEndExists) {
+                $missingWorkEndDates->push($date);
+            }
+        }
+        
+        // エラーに追加
+        foreach ($missingWorkEndDates as $missingDate) {
+            $errors[] = [
+                'date' => $missingDate,
+                'error' => '退勤打刻がありません',
+            ];
+        }        
         // dd($errors);
         
 

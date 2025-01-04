@@ -192,16 +192,35 @@ class AttendanceController extends Controller
         $totalSalary = 0;
 
         foreach ($summaries as $summary) {
+            $error = null;
+            $aditRecords = Adit::where('date', $summary->date)
+            ->where('employee_id', $employeeId)
+            ->get();
+        
+            // 退勤打刻がない日付をチェック
+            $missingWorkEndDates = collect();
+            
+            $workStartExists = $aditRecords->contains('adit_item', 'work_start');
+            $breakStartExists = $aditRecords->contains('adit_item', 'break_start');
+            $breakEndExists = $aditRecords->contains('adit_item', 'break_end');
+            $workEndExists = $aditRecords->contains('adit_item', 'work_end');
+        
+            if (($workStartExists || $breakStartExists || $breakEndExists) && !$workEndExists) {
+                $error = "退勤打刻がありません";
+            }
+  
             $attendanceData[] = [
                 'date' => $summary->date,
                 'work_hours' => $summary->total_work_hours,
                 'salary' => $summary->salary,
-                'error' => $summary->error_types,
+                'error' => $error,
             ];
 
             $totalWorkHours += $summary->total_work_hours;
             $totalSalary += $summary->salary;
         }
+
+        // dd($attendanceData);
 
         // データをBladeに渡す
         return view('attendanceDetail', [
@@ -216,6 +235,15 @@ class AttendanceController extends Controller
         // リクエストから日付と従業員IDを取得
         $date = $request->input('date');
         $employeeId = $request->input('employeeId');
+        $year = Carbon::parse($date)->year;
+        $month = Carbon::parse($date)->month; 
+        if (Carbon::parse($date)->isFuture() || Carbon::parse($date)->isToday()) {
+            return view('editAttendance', [
+                'disable' => 1,
+                'year' => $year,
+                'month' => $month,
+            ]);;
+        }
 
         // 該当する従業員とその日付の打刻データを取得
         $records = Adit::where('employee_id', $employeeId)
@@ -237,11 +265,10 @@ class AttendanceController extends Controller
                 'currentRecord' => $filteredRecords->where('status', 'pending')->last(), // 最新のレコード
             ];
         }
-        $year = Carbon::parse($date)->year;   // 2025
-        $month = Carbon::parse($date)->month; 
 
         // Bladeに渡すデータ
         return view('editAttendance', [
+            'disable' => 0,
             'date' => $date,
             'employeeId' => $employeeId,
             'records' => $data,
