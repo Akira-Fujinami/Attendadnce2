@@ -143,14 +143,6 @@ class AttendanceController extends Controller
             $employee->attendanceDays = $summary->attendanceDays ?? 0;
             $employee->totalWorkHours = $summary->totalWorkHours ?? 0;
             $employee->totalSalary = $summary->totalSalary ?? 0;
-
-            $hasErrors = DailySummary::where('company_id', $request->companyId)
-            ->where('employee_id', $employee->id)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->whereNotNull('error_types')
-            ->exists();
-    
-            $employee->hasErrors = $hasErrors;
         }
 
         // データをBladeに渡す

@@ -35,27 +35,6 @@ class AditController extends Controller
                 $status = '退勤済み';
             }
         }
-    
-        $errorSummaries = DailySummary::where('company_id', $user->company_id)
-        ->where('employee_id', $user->id)
-        ->whereNotNull('error_types') // エラーがあるデータのみ取得
-        ->get();
-
-        // エラーの内容を配列に格納
-        $errors = $errorSummaries->map(function ($summary) {
-            return [
-                'date' => $summary->date,
-                'error' => is_array($summary->error_types)
-                    ? implode(', ', $summary->error_types)
-                    : $summary->error_types,
-            ];
-        })->toArray();
-        if ($latestAdit && $latestAdit->status === 'pending') {
-            $errors[] = [
-                'date' => $latestAdit->date,
-                'error' => '未承認の打刻があります',
-            ];
-        }
 
         $lastMonthStart = Carbon::now()->subMonth()->startOfMonth()->toDateString();
         $yesterday = Carbon::yesterday()->toDateString();
@@ -64,6 +43,7 @@ class AditController extends Controller
         $aditRecords = Adit::whereBetween('date', [$lastMonthStart, $yesterday])
             ->where('employee_id', $user->id)
             ->where('company_id', $user->company_id)
+            ->where('status', '!=', 'rejected')
             ->get()
             ->groupBy('date');
         

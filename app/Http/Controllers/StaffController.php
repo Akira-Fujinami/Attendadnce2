@@ -28,15 +28,6 @@ class StaffController extends Controller
         $yesterday = Carbon::yesterday()->toDateString();
         $EmployeeList = $query->where('company_id', Auth::user()->id)->get();
         foreach ($EmployeeList as $employee) {
-            $errors = DailySummary::where('company_id', $user->id)
-                ->where('employee_id', $employee->id)
-                ->whereNotNull('error_types')
-                ->with('employee')
-                ->get()
-                ->pluck('error_types', 'employee.name') // 名前をキーにする
-                ->toArray();
-                // dd($errors);
-            $employee->errors = $errors;
             $pendingRecords = Adit::where('employee_id', $employee->id)
             ->where('company_id', $user->id)
             ->where('status', 'pending')
@@ -58,6 +49,7 @@ class StaffController extends Controller
             $aditRecords = Adit::whereBetween('date', [$lastMonthStart, $yesterday])
             ->where('company_id', $user->id)
             ->where('employee_id', $employee->id)
+            ->where('status', '!=', 'rejected')
             ->with('employee')
             ->get()
             ->groupBy('date');
