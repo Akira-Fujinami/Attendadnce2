@@ -200,6 +200,11 @@ class AttendanceController extends Controller
             if (($workStartExists || $breakStartExists || $breakEndExists) && !$workEndExists) {
                 $error = "退勤打刻がありません";
             }
+
+            $pendingStatusExists = $aditRecords->contains('status', 'pending');
+            if ($pendingStatusExists) {
+                $error = "承認待ちの打刻があります";
+            }
   
             $attendanceData[] = [
                 'date' => $summary->date,
@@ -211,6 +216,7 @@ class AttendanceController extends Controller
             $totalWorkHours += $summary->total_work_hours;
             $totalSalary += $summary->salary;
         }
+        // dd($aditRecords);
 
         // dd($attendanceData);
 
@@ -228,13 +234,14 @@ class AttendanceController extends Controller
         $date = $request->input('date');
         $employeeId = $request->input('employeeId');
         $year = Carbon::parse($date)->year;
-        $month = Carbon::parse($date)->month; 
-        if (Carbon::parse($date)->isFuture() || Carbon::parse($date)->isToday()) {
+        $month = Carbon::parse($date)->month;
+        // 日付が未来または明日かどうかを確認
+        if (Carbon::parse($date)->isFuture() || Carbon::parse($date)->isTomorrow()) {
             return view('editAttendance', [
                 'disable' => 1,
                 'year' => $year,
                 'month' => $month,
-            ]);;
+            ]);
         }
 
         // 該当する従業員とその日付の打刻データを取得
@@ -395,6 +402,26 @@ class AttendanceController extends Controller
         };
         return response()->stream($callback, 200, $headers);
     }
-    
+    public function showDetails($date, $employeeId, $companyId)
+    {
+        // 指定日の打刻データを取得
+        $aditRecords = Adit::where('employee_id', $employeeId)
+            ->where('company_id', $companyId)
+            ->where('date', $date)
+            ->orderBy('minutes', 'asc')
+            ->get();
+        $employee = Employee::find($employeeId);
+
+        if (!$employee || $aditRecords->isEmpty()) {
+            return redirect()->back()->with('error', '該当するデータが見つかりません。');
+        }
+
+        return view('attendanceDetails', [
+            'date' => $date,
+            'employee' => $employee,
+            'aditRecords' => $aditRecords,
+        ]);
+    }
+
 
 }

@@ -117,6 +117,8 @@
         <div class="staff-info">
             <p>名前: {{ $employee->name }}</p>
             <p>メール: {{ $employee->email }}</p>
+            <p>時給: ¥{{ number_format($employee->hourly_wage) }}</p>
+            <p>交通費: ¥{{ number_format($employee->transportation_fee) }}</p>
         </div>
 
         <table>
@@ -136,7 +138,9 @@
                         @endphp
                         <span class="error-icon" title="{{ $errorText }}">&#33;</span>
                         @endif
-                        {{ $data['date'] }}
+                        <a href="{{ route('attendanceDetails', ['date' => $data['date'], 'employeeId' => $employee->id, 'companyId' => $employee->company_id]) }}">
+                            {{ $data['date'] }}
+                        </a>
                     </td>
                     <td>{{ $data['work_hours'] }} 時間</td>
                     <td>¥{{ number_format($data['salary']) }}</td>
