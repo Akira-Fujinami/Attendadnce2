@@ -161,8 +161,8 @@
 
     <div class="info">
         <p><strong>スタッフ名:</strong> {{ $name }}</p>
-        <p><strong>総労働時間:</strong> {{ number_format($totalWorkHours, 2) }} 時間</p>
-        <p><strong>総休憩時間:</strong> {{ number_format($totalBreakHours, 2) }} 時間</p>
+        <p><strong>総労働時間:</strong> {{ $totalWorkHours }} </p>
+        <p><strong>総休憩時間:</strong> {{ $totalBreakHours}} </p>
     </div>
     <table>
         <thead>
@@ -231,10 +231,28 @@
                         @endif
                     </td>
                     <td>
-                        {{ number_format($workHours, 2) }} 時間
+                        @if (!is_null($recordsForDate) && isset($recordsForDate['work']))
+                            @php
+                                $totalMinutes = $recordsForDate['work'] * 60; // 時間を分に変換
+                                $hours = floor($totalMinutes / 60); // 時間部分
+                                $minutes = $totalMinutes % 60; // 分部分
+                            @endphp
+                            {{ sprintf('%02d時間%02d分', $hours, $minutes) }}
+                        @else
+                            00時間00分
+                        @endif
                     </td>
                     <td>
-                        {{ number_format($breakHours, 2) }} 時間
+                    @if (!is_null($recordsForDate) && isset($recordsForDate['break']))
+                        @php
+                            $totalMinutes = $recordsForDate['break'] * 60; // 時間を分に変換
+                            $hours = floor($totalMinutes / 60); // 時間部分
+                            $minutes = $totalMinutes % 60; // 分部分
+                        @endphp
+                        {{ sprintf('%02d時間%02d分', $hours, $minutes) }}
+                    @else
+                        00時間00分
+                    @endif
                     </td>
                 </tr>
             @endforeach

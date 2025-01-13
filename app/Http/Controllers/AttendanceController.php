@@ -55,6 +55,11 @@ class AttendanceController extends Controller
                                 $hasPending = $records->contains(function ($record) {
                                     return $record->status === 'pending';
                                 });
+                                $sum = DailySummary::where('employee_id', Auth::User()->id)
+                                    ->where('company_id', Auth::User()->company_id)
+                                    ->where('date', $date)
+                                    ->first();
+                                    // dd($Sum);
 
                                 $mappedRecords = $records->map(function ($record) {
                                     return [
@@ -71,6 +76,8 @@ class AttendanceController extends Controller
                                 return [
                                     'has_pending' => $hasPending,
                                     'records' => $mappedRecords,
+                                    'break' => $sum['total_break_hours'],
+                                    'work' => $sum['total_work_hours']
                                 ];
                             });
 
@@ -78,8 +85,6 @@ class AttendanceController extends Controller
     
                             // dd($attendanceRecords);
 
-        $totalWorkHours = 0;
-        $totalBreakHours = 0;
 
         // 月初と月末の日付を取得
         $startDate = reset($dates); // $dates[0] が月初の日付
@@ -92,22 +97,34 @@ class AttendanceController extends Controller
             ->get();
 
         // 各データを加算
+        $totalWorkHoursMinutes = 0;
+        $totalBreakHoursMinutes = 0;
+        
         foreach ($summaries as $summary) {
-            $totalWorkHours += $summary->total_work_hours;
-            $totalBreakHours += $summary->total_break_hours;
+            $totalWorkHoursMinutes += $summary->total_work_hours * 60; // 時間を分に変換して加算
+            $totalBreakHoursMinutes += $summary->total_break_hours * 60; // 時間を分に変換して加算
         }
+        
+        // 総勤務時間の計算
+        $workHours = floor($totalWorkHoursMinutes / 60); // 時間部分
+        $workMinutes = $totalWorkHoursMinutes % 60;     // 分部分
+        
+        // 総休憩時間の計算
+        $breakHours = floor($totalBreakHoursMinutes / 60); // 時間部分
+        $breakMinutes = $totalBreakHoursMinutes % 60;     // 分部分
+        
+        // 表示用
+        $formattedWorkHours = sprintf('%02d時間%02d分', $workHours, $workMinutes);
+        $formattedBreakHours = sprintf('%02d時間%02d分', $breakHours, $breakMinutes);
 
-        // 必要に応じてフォーマットを調整
-        $totalWorkHoursFormatted = floor($totalWorkHours) + ($totalWorkHours % 1) * 100 / 60; // 時間:分をフォーマット
-        $totalBreakHoursFormatted = floor($totalBreakHours) + ($totalBreakHours % 1) * 100 / 60;
         // dd($attendanceRecords);
         return view('attendance', [
             'dates' => $dates,
             'attendanceRecords' => $attendanceRecords,
             'name' => $employeeName,
             'employeeId' => $employeeId,
-            'totalWorkHours' => $totalWorkHoursFormatted,
-            'totalBreakHours' => $totalBreakHoursFormatted,
+            'totalWorkHours' => $formattedWorkHours,
+            'totalBreakHours' => $formattedBreakHours,
             'currentYear' => $year,
             'currentMonth' => $month,
         ]);
@@ -252,19 +269,17 @@ class AttendanceController extends Controller
             ->whereIn('status', ['approved', 'pending'])
             ->orderBy('created_at', 'asc') // 古い順にソート
             ->get();
-            // dd($records);
 
         // 出勤、休憩開始、休憩終了、退勤に分ける
         $aditItems = ['work_start', 'break_start', 'break_end', 'work_end'];
         $data = [];
 
         foreach ($aditItems as $item) {
-            $filteredRecords = $records->where('adit_item', $item);
-            // dd($filteredRecords);
+            $filteredRecords = $records->where('adit_item', $item)->values();
             $data[$item] = [
-                'previousRecord' => $filteredRecords->where('status', 'approved')->last(), // 最新の承認済み
-                'currentRecord' => $filteredRecords->where('status', 'pending')->last(), // 最新のレコード
-            ];
+                'previousRecord' => $filteredRecords->where('status', 'approved')->values()->all(), // 最新の承認済み
+                'currentRecord' => $filteredRecords->where('status', 'pending')->values()->all(), // 最新のレコード
+            ];            
         }
         // dd($data);
 
@@ -273,6 +288,9 @@ class AttendanceController extends Controller
             'disable' => 0,
             'date' => $date,
             'employeeId' => $employeeId,
+            // 'work_start' => $data['work_start']->first() ?? null,
+            // 'work_end' => $data['work_end']->first() ?? null,
+            // 'breakPairs' => $breakPairs,
             'records' => $data,
             'year' => $year,
             'month' => $month,
@@ -310,7 +328,10 @@ class AttendanceController extends Controller
             ->whereDate('date', $request->date)
             ->where('adit_item', $request->adit_item)
             ->where('status', 'pending')
+            ->where('before_adit_id', $request->adit_id)
             ->first();
+
+            // dd($attendanceRecord);
     
         if ($attendanceRecord) {
             if (empty($aditItems)) {
@@ -331,6 +352,7 @@ class AttendanceController extends Controller
         } else {
             // レコードが存在しない場合は新規作成
             foreach ($aditItems as $aditItem => $time) {
+                // dd($aditItems);
                 Adit::create([
                     'company_id' => $request->companyId,
                     'employee_id' => $request->employeeId,
@@ -338,6 +360,7 @@ class AttendanceController extends Controller
                     'minutes' => \Carbon\Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $time),
                     'adit_item' => $aditItem,
                     'status' => 'pending',
+                    'before_adit_id' => $request->adit_id ?? null,
                     'deleted' => 0, // 削除フラグを初期化
                 ]);
             }
@@ -364,11 +387,16 @@ class AttendanceController extends Controller
                 ->whereBetween('date', [$startDate, $endDate])
                 ->selectRaw('SUM(total_work_hours) as totalWorkHours, COUNT(date) as attendanceDays, SUM(salary) as totalSalary')
                 ->first();
+            // 総勤務時間の計算
+            $workMinutes = $summary->totalWorkHours % 60;     // 分部分
+            
+            // 表示用
+            $formattedWorkHours = sprintf('%02d時間%02d分', $summary->totalWorkHours, $workMinutes);
     
             $data[] = [
                 'name' => $employee->name,
                 'attendanceDays' => $summary->attendanceDays ?? 0,
-                'totalWorkHours' => $summary->totalWorkHours ?? 0,
+                'totalWorkHours' => $formattedWorkHours ?? 0,
                 'totalSalary' => $summary->totalSalary ?? 0,
             ];
         }

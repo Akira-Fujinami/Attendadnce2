@@ -115,8 +115,8 @@ class AditController extends Controller
                         ->where('employee_id', $request->employee_id)
                         ->exists();
         if ($aditExists) {
-            $totalWorkHours = $this->calculateWorkHours($request->company_id, $request->employee_id, $today);
             $totalBreakHours = $this->calculateBreakHours($request->company_id, $request->employee_id, $today);
+            $totalWorkHours = $this->calculateWorkHours($request->company_id, $request->employee_id, $today, $totalBreakHours);
             // 給与を計算
             $salary = $this->calculateSalary($request->wage, $request->transportation, $totalWorkHours, $totalBreakHours);
     
@@ -130,7 +130,7 @@ class AditController extends Controller
         return redirect()->route('adit');
     }
 
-    public static function calculateWorkHours($companyId, $employeeId, $date)
+    public static function calculateWorkHours($companyId, $employeeId, $date, $breakHours)
     {
         $workStart = Adit::where('employee_id', $employeeId)
             ->where('company_id', $companyId)
@@ -153,11 +153,8 @@ class AditController extends Controller
             // dd($workEnd);
 
         if ($workStart && $workEnd) {
-            $totalWorkHours = \Carbon\Carbon::parse($workStart->minutes)->diffInMinutes(\Carbon\Carbon::parse($workEnd->minutes));
-            $hours = floor($totalWorkHours / 60);
-                        
-            $minutes = $totalWorkHours % 60;
-            return ($hours + ($minutes / 100));
+            $totalWorkHours = \Carbon\Carbon::parse($workStart->minutes)->diffInHours(\Carbon\Carbon::parse($workEnd->minutes));
+            return ($totalWorkHours - $breakHours);
         }
 
         return 0;
@@ -165,43 +162,51 @@ class AditController extends Controller
 
     public static function calculateBreakHours($companyId, $employeeId, $date)
     {
-        $breakStart = Adit::where('employee_id', $employeeId)
+        // 休憩開始データを取得
+        $breakStarts = Adit::where('employee_id', $employeeId)
             ->where('adit_item', 'break_start')
             ->whereDate('date', $date)
             ->where('status', 'approved')
             ->where('deleted', 0)
             ->orderBy('created_at', 'asc')
-            ->first();
-
-        $breakEnd = Adit::where('employee_id', $employeeId)
+            ->get();
+    
+        // 休憩終了データを取得
+        $breakEnds = Adit::where('employee_id', $employeeId)
             ->where('adit_item', 'break_end')
             ->whereDate('date', $date)
             ->where('status', 'approved')
             ->where('deleted', 0)
-            ->orderBy('created_at', 'desc')
-            ->first();
-            // dd($breakEnd);
-
-        if ($breakStart && $breakEnd) {
-            $breakStartTime = Carbon::parse($breakStart->minutes); // Carbonインスタンスに変換
-            $breakEndTime = Carbon::parse($breakEnd->minutes); // Carbonインスタンスに変換
-            return $breakStartTime->diffInHours($breakEndTime); // 休憩時間を計算
+            ->orderBy('created_at', 'asc')
+            ->get();
+    
+        // 休憩時間を計算する
+        $totalBreakHours = 0;
+        $count = min($breakStarts->count(), $breakEnds->count()); // ペアとして計算する数を決定
+    
+        for ($i = 0; $i < $count; $i++) {
+            $breakStartTime = Carbon::parse($breakStarts[$i]->minutes);
+            $breakEndTime = Carbon::parse($breakEnds[$i]->minutes);
+            $totalBreakHours += $breakStartTime->diffInMinutes($breakEndTime) / 60; // 時間に変換して加算
         }
+    
+        return $totalBreakHours;
+    }    
 
-        return 0;
-    }
-
-    public static function calculateSalary($wage, $transportation, $totalWorkHours, $totalBreakHours)
+    public static function calculateSalary($wage, $transportation, $totalWorkHours)
     {
-        // 実働時間を計算
-        $actualWorkHours = $totalWorkHours - $totalBreakHours;
-
         // 給与を計算
-        $salary = 0;
-        if ($actualWorkHours > 0) {
-            $salary = ($actualWorkHours * $wage) + $transportation;
+        if ($totalWorkHours <= 0) {
+            return 0;
         }
-
+        $regularHours = min($totalWorkHours, 8); // 通常の勤務時間は最大8時間
+        $overtimeHours = max($totalWorkHours - 8, 0); // 8時間を超えた分
+    
+        $regularPay = $regularHours * $wage; // 通常の給与
+        $overtimePay = $overtimeHours * $wage * 1.25; // 1.25倍の割増給与
+    
+        $salary = $regularPay + $overtimePay + $transportation;
+    
         return $salary;
     }
 

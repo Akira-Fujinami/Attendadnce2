@@ -28,6 +28,7 @@ class Adit extends Model
         'minutes',
         'adit_item',
         'status',
+        'before_adit_id',
         'deleted',
     ];
 

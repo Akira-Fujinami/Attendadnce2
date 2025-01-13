@@ -32,6 +32,7 @@ class AppliedAditController extends Controller
                                         'hourly_wage' => $record->employee->hourly_wage ?? 0,
                                         'transportation_fee' => $record->employee->transportation_fee ?? 0,
                                         'id' => $record->employee->id,
+                                        'adit_id' => $record->before_adit_id,
                                         'minutes' => $record->minutes,
                                         'adit_item' => $record->adit_item,
                                         'previous_time' => $previousApproved->minutes ?? 'なし',
@@ -52,16 +53,30 @@ class AppliedAditController extends Controller
 
     public function approveAdit(Request $request)
     {
-        $adits = Adit::where('company_id', $request->company_id)
+        $pendingAdits = Adit::where('company_id', $request->company_id)
             ->where('employee_id', $request->employee_id)
-            ->where('minutes', $request->date)
+            ->where('date', $request->date)
             ->where('adit_item', $request->adit_item)
             ->where('status', 'pending')
             ->get();
+            // dd($pendingAdits);
 
+        $approvedAdits = Adit::where('company_id', $request->company_id)
+            ->where('employee_id', $request->employee_id)
+            ->where('date', $request->date)
+            ->where('adit_item', $request->adit_item)
+            ->where('status', 'approved')
+            ->when($request->adit_id, function ($query, $adit_id) {
+                return $query->where('id', $adit_id);
+            })
+            ->get();
+            // dd($approvedAdits);
         // 承認処理
-        foreach ($adits as $adit) {
-            $adit->update(['status' => 'approved']);
+        foreach ($pendingAdits as $pendingAdit) {
+            $pendingAdit->update(['status' => 'approved']);
+        }
+        foreach ($approvedAdits as $approvedAdit) {
+            $approvedAdit->update(['status' => 'rejected']);
         }
 
         $date = date('Y-m-d', strtotime($request->date));
@@ -87,8 +102,8 @@ class AppliedAditController extends Controller
         ->where('employee_id', $request->employee_id)
         ->exists();
         if ($aditExists) {
-            $totalWorkHours = AditController::calculateWorkHours($request->company_id, $request->employee_id, $date);
             $totalBreakHours = AditController::calculateBreakHours($request->company_id, $request->employee_id, $date);
+            $totalWorkHours = AditController::calculateWorkHours($request->company_id, $request->employee_id, $date, $totalBreakHours);
             // 給与を計算
             $salary = AditController::calculateSalary($request->wage, $request->transportation, $totalWorkHours, $totalBreakHours);
 

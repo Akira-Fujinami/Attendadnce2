@@ -185,7 +185,14 @@
                         {{ $employee['name'] }}
                     </td>
                     <td>{{ $employee['attendanceDays'] }}</td>
-                    <td>{{ $employee['totalWorkHours'] }} 時間</td>
+                    <td>
+                        @php
+                            $totalMinutes = $employee['totalWorkHours'] * 60; // 時間を分に変換
+                            $hours = floor($totalMinutes / 60); // 時間部分
+                            $minutes = $totalMinutes % 60; // 分部分
+                        @endphp
+                        {{ sprintf('%02d時間%02d分', $hours, $minutes) }}
+                    </td>
                     <td>¥{{ number_format($employee['totalSalary']) }}</td>
                     <td>
                         <a href="{{ route('attendanceDetail', ['employeeId' => $employee['id'], 'year' => $currentYear, 'month' => $currentMonth]) }}" class="view-link">詳細</a>

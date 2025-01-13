@@ -122,45 +122,182 @@
                 </tr>
             </thead>
             <tbody>
-                @php
-                    $labels = [
-                        'work_start' => '出勤時間',
-                        'work_end' => '退勤時間',
-                        'break_start' => '休憩開始',
-                        'break_end' => '休憩終了',
-                    ];
-                @endphp
+    @php
+        $labels = [
+            'work_start' => '出勤時間',
+            'work_end' => '退勤時間',
+            'break_start' => '休憩開始',
+            'break_end' => '休憩終了',
+        ];
 
-                @foreach ($records as $aditItem => $record)
-                    <tr>
-                        <td>
-                            @if ($record['currentRecord'] && $record['currentRecord']->status === 'pending')
-                                <span class="error-icon">&#33;</span>
-                            @endif
-                            {{ $labels[$aditItem] }}
-                        </td>
-                        <td>
-                            @if ($record['previousRecord'])
-                                {{ \Carbon\Carbon::parse($record['previousRecord']->minutes)->format('H:i') }}
-                            @else
-                                未登録
-                            @endif
-                        </td>
-                        <td>
-                            <form method="POST" action="{{ route('updateAttendance') }}">
-                                @csrf
-                                <input type="hidden" name="date" value="{{ $date }}">
-                                <input type="hidden" name="employeeId" value="{{ $employeeId }}">
-                                <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
-                                <input type="hidden" name="adit_item" value="{{ $aditItem }}">
-                                <input type="time" name="{{ $aditItem }}" 
-                                    value="{{ $record['currentRecord'] ? \Carbon\Carbon::parse($record['currentRecord']->minutes)->format('H:i') : '' }}">
-                                <button type="submit" class="save-btn">保存</button>
-                            </form>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
+        // `break_start` と `break_end` をまとめて時間順に並べ替える
+        $combinedRecords = collect(array_merge(
+            $records['break_start']['previousRecord'] ?? [],
+            $records['break_end']['previousRecord'] ?? []
+        ))
+        ->unique(fn($item) => $item->id) // IDで重複排除
+        ->sortBy(fn($item) => \Carbon\Carbon::parse($item->minutes))
+        ->values();
+
+    @endphp
+
+    {{-- 出勤・退勤 --}}
+    @foreach ($records as $aditItem => $record)
+        @if (in_array($aditItem, ['work_start']))
+            <tr>
+                <td>
+                    @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
+                        <span class="error-icon">&#33;</span>
+                    @endif
+                    {{ $labels[$aditItem] }}
+                </td>
+                <td>
+                    @if (!empty($record['previousRecord']))
+                        {{ \Carbon\Carbon::parse($record['previousRecord'][0]->minutes)->format('H:i') }}
+                    @else
+                        未登録
+                    @endif
+                </td>
+                <td>
+                    <form method="POST" action="{{ route('updateAttendance') }}">
+                        @csrf
+                        <input type="hidden" name="date" value="{{ $date }}">
+                        <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                        <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                        <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                        <input type="time" name="{{ $aditItem }}"
+                            value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
+                        <button type="submit" class="save-btn">保存</button>
+                    </form>
+                </td>
+            </tr>
+        @endif
+    @endforeach
+
+    {{-- 休憩関連のデータ --}}
+    @if ($combinedRecords->isNotEmpty())
+        @foreach ($combinedRecords as $breakRecord)
+            @php
+            $matchingCurrentRecord = collect(array_merge(
+                $records['break_start']['currentRecord'] ?? [],
+                $records['break_end']['currentRecord'] ?? []
+            ))->firstWhere('before_adit_id', $breakRecord->id);
+            @endphp
+            <tr>
+                <td>
+                    @if ($matchingCurrentRecord)
+                        <span class="error-icon">&#33;</span>
+                    @endif
+                    {{ $breakRecord->adit_item === 'break_start' ? '休憩開始' : '休憩終了' }}
+                </td>
+                <td>
+                    {{ \Carbon\Carbon::parse($breakRecord->minutes)->format('H:i') }}
+                </td>
+                <td>
+                    <form method="POST" action="{{ route('updateAttendance') }}">
+                        @csrf
+                        <input type="hidden" name="date" value="{{ $date }}">
+                        <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                        <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                        <input type="hidden" name="adit_item" value="{{ $breakRecord->adit_item }}">
+                        <input type="hidden" name="adit_id" value="{{ $breakRecord->id }}">
+                        <input type="time" name="{{ $breakRecord->adit_item }}"
+                            value="{{ $matchingCurrentRecord ? \Carbon\Carbon::parse($matchingCurrentRecord->minutes)->format('H:i') : '' }}">
+                        <button type="submit" class="save-btn">保存</button>
+                    </form>
+                </td>
+            </tr>
+        @endforeach
+    @else
+        @foreach ($records as $aditItem => $record)
+            @if (in_array($aditItem, ['break_start']))
+                <tr>
+                    <td>
+                        @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
+                            <span class="error-icon">&#33;</span>
+                        @endif
+                        {{ $labels['break_start'] }}
+                    </td>
+                    <td>
+                        未登録
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ route('updateAttendance') }}">
+                            @csrf
+                            <input type="hidden" name="date" value="{{ $date }}">
+                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                            <input type="hidden" name="adit_item" value="{{ 'break_start' }}">
+                            <input type="time" name="{{ 'break_start' }}"
+                                value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
+                            <button type="submit" class="save-btn">保存</button>
+                        </form>
+                    </td>
+                </tr>
+            @endif
+        @endforeach
+        @foreach ($records as $aditItem => $record)
+            @if (in_array($aditItem, ['break_end']))
+                <tr>
+                    <td>
+                        @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
+                            <span class="error-icon">&#33;</span>
+                        @endif
+                        {{ $labels['break_end'] }}
+                    </td>
+                    <td>
+                        未登録
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ route('updateAttendance') }}">
+                            @csrf
+                            <input type="hidden" name="date" value="{{ $date }}">
+                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                            <input type="hidden" name="adit_item" value="{{ 'break_end' }}">
+                            <input type="time" name="{{ 'break_end' }}"
+                                value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
+                            <button type="submit" class="save-btn">保存</button>
+                        </form>
+                    </td>
+                </tr>
+            @endif
+        @endforeach
+    @endif
+    @foreach ($records as $aditItem => $record)
+        @if (in_array($aditItem, ['work_end']))
+            <tr>
+                <td>
+                    @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
+                        <span class="error-icon">&#33;</span>
+                    @endif
+                    {{ $labels[$aditItem] }}
+                </td>
+                <td>
+                    @if (!empty($record['previousRecord']))
+                        {{ \Carbon\Carbon::parse($record['previousRecord'][0]->minutes)->format('H:i') }}
+                    @else
+                        未登録
+                    @endif
+                </td>
+                <td>
+                    <form method="POST" action="{{ route('updateAttendance') }}">
+                        @csrf
+                        <input type="hidden" name="date" value="{{ $date }}">
+                        <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                        <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                        <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                        <input type="time" name="{{ $aditItem }}"
+                            value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
+                        <button type="submit" class="save-btn">保存</button>
+                    </form>
+                </td>
+            </tr>
+        @endif
+    @endforeach
+</tbody>
+
+
         </table>
         @elseif ($disable)
         <div style="text-align: center; margin: 20px 0; padding: 20px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px;">
