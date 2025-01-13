@@ -55,6 +55,11 @@ class AttendanceController extends Controller
                                 $hasPending = $records->contains(function ($record) {
                                     return $record->status === 'pending';
                                 });
+                                $hasWorkStart = $records->contains('adit_item', 'work_start');
+                                $hasWorkEnd = $records->contains('adit_item', 'work_end');
+                        
+                                // エラーフラグを追加
+                                $error = !$hasWorkStart || !$hasWorkEnd;
                                 $sum = DailySummary::where('employee_id', Auth::User()->id)
                                     ->where('company_id', Auth::User()->company_id)
                                     ->where('date', $date)
@@ -75,6 +80,7 @@ class AttendanceController extends Controller
                                 // 各日付グループに `has_pending` を追加
                                 return [
                                     'has_pending' => $hasPending,
+                                    'error' => $error,
                                     'records' => $mappedRecords,
                                     'break' => $sum['total_break_hours'],
                                     'work' => $sum['total_work_hours']

@@ -21,6 +21,8 @@ class AditController extends Controller
             ->where('company_id', $user->company_id)
             ->exists();
         $latestAdit = Adit::whereDate('date', $today)
+            ->where('employee_id', $user->id)
+            ->where('company_id', $user->company_id)
             ->orderBy('created_at', 'desc') // 最新順にソート
             ->first();
         $status = null;
@@ -79,7 +81,6 @@ class AditController extends Controller
             'aditExists' => $aditExists,
             'errors' => $errors,
         ];
-        // dd($data);
 
         return view('adit', compact('data'));
     }

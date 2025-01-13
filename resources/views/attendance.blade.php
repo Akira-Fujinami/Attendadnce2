@@ -89,7 +89,7 @@
         }
 
         .error-icon::after {
-            content: "未承認の打刻です";
+            content: "打刻が不足してます";
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
@@ -207,7 +207,7 @@
                     @endphp
                 <tr>
                     <td>
-                        @if ($recordsForDate && $recordsForDate['has_pending'])
+                        @if ($recordsForDate && $recordsForDate['error'])
                             <span class="error-icon">&#33;</span>
                         @endif
                         <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $date }}</a>

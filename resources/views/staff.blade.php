@@ -216,19 +216,13 @@
         <ul>
             @foreach ($EmployeeList as $employee)
                 @if (!empty($employee->errors))
-                    @foreach ($employee->errors as $employeeName => $errors)
-                        <li style="color: #dc3545; font-weight: bold; text-decoration: none;">
-                            {{ $employeeName }}:
-                            @if (is_array($errors))
-                                <br>
-                                @foreach ($errors as $error)
-                                    ・{{ $error }}<br>
-                                @endforeach
-                            @else
-                                {{ $errors }}
-                            @endif
-                        </li>
-                    @endforeach
+                    <li style="color: #dc3545; font-weight: bold; text-decoration: none;">
+                        {{ $employee->name }}:
+                        <br>
+                        @foreach ($employee->errors as $error)
+                            ・{{ $error }}<br>
+                        @endforeach
+                    </li>
                 @endif
                 @if (!empty($employee->pendingRecords))
                     @foreach ($employee->pendingRecords as $pendingRecord)

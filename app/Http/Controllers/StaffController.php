@@ -77,7 +77,6 @@ class StaffController extends Controller
             // プロパティに追加
             $employee->setAttribute('errors', $errors[$employee->name] ?? []);
         }
-        // dd($EmployeeList);
 
         return view('staff', [
             'EmployeeList' => $EmployeeList,
