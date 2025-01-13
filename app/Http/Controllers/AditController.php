@@ -60,7 +60,7 @@ class AditController extends Controller
                 $missingWorkEndDates->push($date);
             }
         }
-        
+        $errors = [];
         // エラーに追加
         foreach ($missingWorkEndDates as $missingDate) {
             $errors[] = [

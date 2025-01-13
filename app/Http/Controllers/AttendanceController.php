@@ -235,12 +235,14 @@ class AttendanceController extends Controller
         $employeeId = $request->input('employeeId');
         $year = Carbon::parse($date)->year;
         $month = Carbon::parse($date)->month;
+        $day = Carbon::parse($date)->day;
         // 日付が未来または明日かどうかを確認
         if (Carbon::parse($date)->isFuture() || Carbon::parse($date)->isTomorrow()) {
             return view('editAttendance', [
                 'disable' => 1,
                 'year' => $year,
                 'month' => $month,
+                'day' => $day,
             ]);
         }
 
@@ -264,6 +266,7 @@ class AttendanceController extends Controller
                 'currentRecord' => $filteredRecords->where('status', 'pending')->last(), // 最新のレコード
             ];
         }
+        // dd($data);
 
         // Bladeに渡すデータ
         return view('editAttendance', [
@@ -273,6 +276,7 @@ class AttendanceController extends Controller
             'records' => $data,
             'year' => $year,
             'month' => $month,
+            'day' => $day,
         ]);
     }
 

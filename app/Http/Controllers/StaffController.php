@@ -27,6 +27,7 @@ class StaffController extends Controller
         $lastMonthStart = Carbon::now()->subMonth()->startOfMonth()->toDateString();
         $yesterday = Carbon::yesterday()->toDateString();
         $EmployeeList = $query->where('company_id', Auth::user()->id)->get();
+        $errors = []; // エラー配列を初期化
         foreach ($EmployeeList as $employee) {
             $pendingRecords = Adit::where('employee_id', $employee->id)
             ->where('company_id', $user->id)
@@ -74,7 +75,7 @@ class StaffController extends Controller
             }
         
             // プロパティに追加
-            $employee->setAttribute('errors', $errors);
+            $employee->setAttribute('errors', $errors[$employee->name] ?? []);
         }
         // dd($EmployeeList);
 
