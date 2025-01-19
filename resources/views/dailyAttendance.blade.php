@@ -36,6 +36,11 @@
             background: #007bff;
             color: white;
         }
+        .summary {
+            text-align: right;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +76,9 @@
                 @endforeach
             </tbody>
         </table>
+        <div class="summary">
+            <p>総給与: <span>¥{{ number_format($totalSalary) }}</span></p>
+        </div>
         <a href="{{ route('showCalendar') }}">カレンダーに戻る</a>
     </div>
 </body>

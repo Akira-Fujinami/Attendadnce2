@@ -61,6 +61,10 @@
             font-weight: bold;
             color: #007bff;
         }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -121,6 +125,9 @@
                 @endfor
             </tbody>
         </table>
+        <div class="back-link">
+            <a href="{{ route('staff') }}">スタッフ一覧に戻る</a>
+        </div>
     </div>
 </body>
 </html>

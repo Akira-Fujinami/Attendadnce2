@@ -482,20 +482,24 @@ class AttendanceController extends Controller
         $selectedDate = Carbon::parse($date);
 
         // 全従業員の打刻データを取得
-        $employees = Employee::where('company_id', Auth::User()->id)->get(); // すべてのスタッフを取得
+        $employees = Employee::join('adit_logs', 'employees.id', '=', 'adit_logs.employee_id')
+        ->where('employees.company_id', Auth::user()->id) // 現在の会社の従業員
+        ->whereDate('adit_logs.date', $selectedDate->toDateString()) // 選択した日付の打刻データ
+        ->selectRaw(
+            'employees.id as employee_id, 
+             employees.name, 
+             employees.company_id'
+        )
+        ->groupBy('employees.id', 'employees.name', 'employees.company_id') // 必要なカラムをすべて GROUP BY に追加
+        ->get();
         $attendanceData = [];
         $totalSalary = 0;
 
         foreach ($employees as $employee) {
-            // 該当スタッフの日付ごとの打刻情報を取得
-            $aditRecords = Adit::where('employee_id', $employee->id)
-                ->where('date', $selectedDate->toDateString())
-                ->where('status', 'approved')
-                ->get();
 
             // 給与の計算
             $summary = DailySummary::where('company_id', Auth::User()->id)
-            ->where('employee_id', $employee->id)
+            ->where('employee_id', $employee->employee_id)
             ->where('date', $selectedDate->toDateString())
             ->selectRaw('total_work_hours, total_break_hours, salary')
             ->first();
@@ -506,7 +510,6 @@ class AttendanceController extends Controller
 
             $attendanceData[] = [
                 'employee' => $employee,
-                'aditRecords' => $aditRecords,
                 'totalDailySalary' => $totalDailySalary,
                 'totalDailyWorkHours' => $totalDailyWorkHours,
                 'totalDailyBreakHours' => $totalDailyBreakHours,
