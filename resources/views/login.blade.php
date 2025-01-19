@@ -87,17 +87,15 @@
 <body>
     <div class="login-container">
         <h1>ログイン</h1>
-        @if ($errors->has('login'))
-            <div style="color: red;">
-                {{ $errors->first('login') }}
-            </div>
+        @if ($errors->has('email'))
+            <div style="color: red;">{{ $errors->first('email') }}</div>
         @endif
 
         <form action="/login" method="POST">
             @csrf
             <div class="form-group">
                 <label for="email">メールアドレス:</label>
-                <input type="email" id="email" name="email" placeholder="例: yamada@example.com" required>
+                <input type="email" id="email" name="email" value="{{ old('email', request()->cookie('email')) }}" placeholder="例: yamada@example.com" required>
             </div>
             <div class="form-group">
                 <label for="password">パスワード</label>

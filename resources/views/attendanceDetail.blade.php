@@ -142,7 +142,12 @@
                             {{ $data['date'] }}
                         </a>
                     </td>
-                    <td>{{ $data['work_hours'] }} 時間</td>
+                    @php
+                        $totalMinutes = $data['work_hours'] * 60; // 時間を分に変換
+                        $hours = floor($totalMinutes / 60); // 時間部分
+                        $minutes = $totalMinutes % 60; // 分部分
+                    @endphp
+                    <td>{{ sprintf('%02d時間%02d分', $hours, $minutes) }}</td>
                     <td>¥{{ number_format($data['salary']) }}</td>
                 </tr>
                 @endforeach

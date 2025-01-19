@@ -201,6 +201,13 @@
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" style="text-align: right;">総給与:</th>
+                    <th>¥{{ number_format($totalSalary) }}</th>
+                    <th></th>
+                </tr>
+            </tfoot>
         </table>
         <a href="{{ route('staff') }}" class="back-btn">戻る</a>
     </div>

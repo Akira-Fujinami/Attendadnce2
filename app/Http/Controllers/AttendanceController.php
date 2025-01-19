@@ -66,6 +66,8 @@ class AttendanceController extends Controller
                                     ->first();
                                     // dd($Sum);
 
+                                $totalBreakHours = $sum->total_break_hours ?? 0; // デフォルト値を設定
+                                $totalWorkHours = $sum->total_work_hours ?? 0;   // デフォルト値を設定
                                 $mappedRecords = $records->map(function ($record) {
                                     return [
                                         'id' => $record->id,
@@ -82,8 +84,8 @@ class AttendanceController extends Controller
                                     'has_pending' => $hasPending,
                                     'error' => $error,
                                     'records' => $mappedRecords,
-                                    'break' => $sum['total_break_hours'],
-                                    'work' => $sum['total_work_hours']
+                                    'break' => $totalBreakHours,
+                                    'work' => $totalWorkHours
                                 ];
                             });
 
@@ -154,7 +156,8 @@ class AttendanceController extends Controller
         }
     
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->toDateString(); // 月初
-        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString(); 
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
+        $totalSalary = 0;
         // 全スタッフの出勤情報を取得
         $employees = Employee::where('company_id', $request->companyId)->get();
         foreach ($employees as $employee) {
@@ -166,6 +169,7 @@ class AttendanceController extends Controller
             $employee->attendanceDays = $summary->attendanceDays ?? 0;
             $employee->totalWorkHours = $summary->totalWorkHours ?? 0;
             $employee->totalSalary = $summary->totalSalary ?? 0;
+            $totalSalary += $employee->totalSalary;
         }
 
         // データをBladeに渡す
@@ -173,6 +177,7 @@ class AttendanceController extends Controller
             'employees' => $employees,
             'currentYear' => $year,
             'currentMonth' => $month,
+            'totalSalary' => $totalSalary,
         ]);
     }
 
@@ -239,9 +244,9 @@ class AttendanceController extends Controller
             $totalWorkHours += $summary->total_work_hours;
             $totalSalary += $summary->salary;
         }
-        // dd($aditRecords);
-
-        // dd($attendanceData);
+        usort($attendanceData, function ($a, $b) {
+            return strtotime($a['date']) - strtotime($b['date']);
+        });
 
         // データをBladeに渡す
         return view('attendanceDetail', [
@@ -294,9 +299,6 @@ class AttendanceController extends Controller
             'disable' => 0,
             'date' => $date,
             'employeeId' => $employeeId,
-            // 'work_start' => $data['work_start']->first() ?? null,
-            // 'work_end' => $data['work_end']->first() ?? null,
-            // 'breakPairs' => $breakPairs,
             'records' => $data,
             'year' => $year,
             'month' => $month,
@@ -445,6 +447,7 @@ class AttendanceController extends Controller
         // 指定日の打刻データを取得
         $aditRecords = Adit::where('employee_id', $employeeId)
             ->where('company_id', $companyId)
+            ->where('status', 'approved')
             ->where('date', $date)
             ->orderBy('minutes', 'asc')
             ->get();
@@ -461,5 +464,60 @@ class AttendanceController extends Controller
         ]);
     }
 
+    public function showCalendar(Request $request)
+    {
+        $selectedDate = carbon::parse($request->input('date', now()->toDateString()));
+
+        // 現在の月のフォーマット
+        $currentMonth = $selectedDate->format('Y年 n月'); 
+        return view('calendar', [
+            'currentMonth' => $currentMonth,
+            'selectedDate' => $selectedDate,
+        ]);
+    }
+
+    public function showDailyAttendance($date)
+    {
+        // 選択された日付
+        $selectedDate = Carbon::parse($date);
+
+        // 全従業員の打刻データを取得
+        $employees = Employee::where('company_id', Auth::User()->id)->get(); // すべてのスタッフを取得
+        $attendanceData = [];
+        $totalSalary = 0;
+
+        foreach ($employees as $employee) {
+            // 該当スタッフの日付ごとの打刻情報を取得
+            $aditRecords = Adit::where('employee_id', $employee->id)
+                ->where('date', $selectedDate->toDateString())
+                ->where('status', 'approved')
+                ->get();
+
+            // 給与の計算
+            $summary = DailySummary::where('company_id', Auth::User()->id)
+            ->where('employee_id', $employee->id)
+            ->where('date', $selectedDate->toDateString())
+            ->selectRaw('total_work_hours, total_break_hours, salary')
+            ->first();
+            $totalDailySalary = $summary->salary ?? 0;
+            $totalDailyWorkHours = $summary->total_work_hours ?? 0;
+            $totalDailyBreakHours = $summary->total_break_hours ?? 0;
+            $totalSalary += $totalDailySalary;
+
+            $attendanceData[] = [
+                'employee' => $employee,
+                'aditRecords' => $aditRecords,
+                'totalDailySalary' => $totalDailySalary,
+                'totalDailyWorkHours' => $totalDailyWorkHours,
+                'totalDailyBreakHours' => $totalDailyBreakHours,
+            ];
+        }
+
+        return view('dailyAttendance', [
+            'selectedDate' => $selectedDate->toDateString(),
+            'attendanceData' => $attendanceData,
+            'totalSalary' => $totalSalary,
+        ]);
+    }
 
 }

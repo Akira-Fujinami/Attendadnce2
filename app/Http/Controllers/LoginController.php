@@ -5,18 +5,42 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Employee;
+use Hash;
 
 class LoginController extends Controller
 {
 
     public function login(Request $request)
     {
-        if (Auth::attempt($request->only('email', 'password'))) {
-            return redirect()->route('staff')->with('success', 'ログインに成功しました');
-        }
+        // if (Auth::attempt($request->only('email', 'password'))) {
+        //     return redirect()->route('staff')->with('success', 'ログインに成功しました');
+        // }
 
-        if (Auth::guard('employees')->attempt($request->only('email', 'password'))) {
-            return redirect()->route('adit')->with('success', '従業員としてログインしました');
+        // if (Auth::guard('employees')->attempt($request->only('email', 'password'))) {
+        //     return redirect()->route('adit')->with('success', '従業員としてログインしました');
+        // }
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            // Usersテーブルのパスワードを確認
+            $employee = Employee::Join('users', 'users.id', '=', 'employees.company_id')
+            ->select('employees.*')
+            ->where('users.email', $request->email)
+            ->first();
+            if (Hash::check($request->password, $user->password)) {
+                Auth::login($user);
+                return redirect()->route('staff')
+                ->with('success', 'ログインに成功しました')
+                ->cookie('email', $request->email, 43200);
+            } elseif ($employee && Hash::check($request->password, $employee->password)) {
+                Auth::guard('employees')->login($employee);
+                return redirect()->route('adit')->with('success', '従業員としてログインしました')
+                ->cookie('email', $request->email, 43200);
+            } else {
+                return back()->withErrors(['email' => 'メールアドレスまたはパスワードが間違っています']); 
+            }
         }
 
         return back()->withErrors(['email' => 'メールアドレスまたはパスワードが間違っています']);
