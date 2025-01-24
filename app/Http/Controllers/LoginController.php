@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Employee;
 use Hash;
+use Illuminate\Support\Facades\Cookie;
 
 class LoginController extends Controller
 {
@@ -22,6 +23,7 @@ class LoginController extends Controller
         // }
 
         $user = User::where('email', $request->email)->first();
+        session()->flush();
 
         if ($user) {
             // Usersテーブルのパスワードを確認
@@ -35,6 +37,7 @@ class LoginController extends Controller
                 ->with('success', 'ログインに成功しました')
                 ->cookie('email', $request->email, 43200);
             } elseif ($employee && Hash::check($request->password, $employee->password)) {
+                session(['lastActivityTime' => now()->timestamp]);
                 Auth::guard('employees')->login($employee);
                 return redirect()->route('adit')->with('success', '従業員としてログインしました')
                 ->cookie('email', $request->email, 43200);

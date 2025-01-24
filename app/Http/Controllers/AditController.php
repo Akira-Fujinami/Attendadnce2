@@ -85,6 +85,7 @@ class AditController extends Controller
         return view('adit', compact('data'));
     }
     public function adit(Request $request) {
+        dd($request);
         Adit::create([
             'company_id' => $request->company_id,
             'employee_id' => $request->employee_id,

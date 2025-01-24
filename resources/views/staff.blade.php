@@ -172,6 +172,7 @@
         <a href="{{ route('staffCreate') }}" class="add-staff-btn">新しいスタッフを追加</a>
         <a href="{{ route('attendanceList', ['companyId' => Auth::User()->id]) }}" class="add-staff-btn">月次出勤簿</a>
         <a href="{{ route('showCalendar') }}" class="add-staff-btn">日次出勤簿</a>
+        <a href="{{ route('events.show') }}" class="add-staff-btn">イベント出勤簿</a>
         <a href="{{ route('appliedAdit', ['companyId' => Auth::User()->id]) }}" class="add-staff-btn">未承認打刻一覧</a>
         <div class="header">
             <h1>スタッフ一覧</h1>

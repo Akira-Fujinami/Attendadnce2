@@ -19,6 +19,7 @@ return new class extends Migration
             $table->datetime('minutes'); // 打刻分
             $table->enum('adit_item', ['work_start', 'break_start', 'break_end', 'work_end']);
             $table->enum('status', ['pending', 'approved', 'rejected']); // 状態
+            $table->unsignedBigInteger('before_adit_id')->nullable();
             $table->timestamps(); // created_at, updated_at
         });
     }

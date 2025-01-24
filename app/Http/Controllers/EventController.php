@@ -1,0 +1,100 @@
+<?php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Event;
+use App\Models\Adit;
+use App\Models\Employee;
+use App\Models\DailySummary;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Response;
+use App\Http\Controllers\DB;
+
+class EventController extends Controller
+{
+
+    public function show(Request $request)
+    {
+        $eventId = $request->input('event_id');
+        $event = null;
+        $totalSalary = 0;
+        // 全イベント一覧を取得
+        $allEvents = Event::where('company_id', Auth::User()->id)->get();
+    
+        // 選択されたイベントを取得
+        if ($eventId) {
+            $event = Event::where('company_id', Auth::User()->id)
+                            ->where('id', $eventId)->first();
+            $employees = Employee::where('company_id', Auth::User()->id)->get();
+            $totalSalary = 0;
+            foreach ($employees as $employee) {
+                $summary = DailySummary::where('company_id', Auth::User()->id)
+                ->where('employee_id', $employee->id)
+                ->whereBetween('date', [$event->fromDate, $event->toDate])
+                ->selectRaw('SUM(total_work_hours) as totalWorkHours, COUNT(date) as attendanceDays, SUM(salary) as totalSalary')
+                ->first();
+                $employee->attendanceDays = $summary->attendanceDays ?? 0;
+                $employee->totalWorkHours = $summary->totalWorkHours ?? 0;
+                $employee->totalSalary = $summary->totalSalary ?? 0;
+                $totalSalary += $employee->totalSalary;
+            }
+            return view('eventAttendance', [
+                'employees' => $employees,
+                'event' => $event,
+                'allEvents' => $allEvents,
+                'totalSalary' => $totalSalary,
+            ]);
+        }
+    
+    
+        return view('eventAttendance', [
+            'event' => $event,
+            'allEvents' => $allEvents,
+        ]);
+    }
+    
+    public function create() {
+
+        return view('event');
+    }
+
+    public function store(Request $request) {
+        // バリデーションルール
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'description' => 'nullable|string|max:1000',
+        ], [
+            // フィールドごとのエラーメッセージ
+            'name.required' => 'イベント名を入力してください。',
+            'name.string' => 'イベント名は文字列で入力してください。',
+            'name.max' => 'イベント名は255文字以内で入力してください。',
+    
+            'start_date.required' => '開始日付を入力してください。',
+            'start_date.date' => '開始日付は有効な日付である必要があります。',
+    
+            'end_date.required' => '終了日付を入力してください。',
+            'end_date.date' => '終了日付は有効な日付である必要があります。',
+            'end_date.after_or_equal' => '終了日付は開始日付以降の日付を指定してください。',
+    
+            'description.string' => '説明は文字列で入力してください。',
+            'description.max' => '説明は1000文字以内で入力してください。',
+        ]);
+
+        // データ保存
+        Event::insert([
+            'company_id' => Auth::User()->id,
+            'name' => $request->input('name'),
+            'fromDate' => $request->input('start_date'),
+            'toDate' => $request->input('end_date'),
+            'description' => $request->input('description'),
+            'created_at' => now(),
+        ]);
+    
+
+        // 保存後、リダイレクトと成功メッセージを表示
+        return redirect()->route('events.show')->with('success', 'イベントが保存されました！');
+    }
+}

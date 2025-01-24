@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Adit;
 use App\Models\Employee;
+use App\Models\Event;
 use App\Models\DailySummary;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Response;
@@ -181,7 +182,7 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function attendanceDetail($employeeId, $year, $month)
+    public function attendanceDetail($employeeId, $year, $month, $eventId = null)
     {
         // スタッフ情報を取得
         $employee = Employee::findOrFail($employeeId);
@@ -205,6 +206,13 @@ class AttendanceController extends Controller
         $summaries = DailySummary::where('employee_id', $employeeId)
             ->whereBetween('date', [$startDate, $endDate])
             ->get();
+        if ($eventId) {
+            $event = Event::where('company_id', Auth::User()->id)
+            ->where('id', $eventId)->first();
+            $summaries = DailySummary::where('employee_id', $employeeId)
+            ->whereBetween('date', [$event->fromDate, $event->toDate])
+            ->get();
+        }
 
         // 出勤簿データを整理
         $attendanceData = [];
