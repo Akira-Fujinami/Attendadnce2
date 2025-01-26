@@ -89,11 +89,23 @@
         @if (session('success'))
             <p class="success">{{ session('success') }}</p>
         @endif
+        @if (session('error'))
+            <p class="error">{{ session('error') }}</p>
+        @endif
         <form action="{{ route('password.reset') }}" method="POST">
             @csrf
             <input type="e-mail" name="mail" placeholder="メールアドレスを入力" required>
+            @error('mail')
+                <p class="error">{{ $message }}</p>
+            @enderror
             <input type="password" name="new_password" placeholder="新しいパスワード" required>
+            @error('new_password')
+                <p class="error">{{ $message }}</p>
+            @enderror
             <input type="password" name="new_password_confirmation" placeholder="パスワードを確認" required>
+            @error('new_password_confirmation')
+                <p class="error">{{ $message }}</p>
+            @enderror
             <button type="submit">リセット</button>
         </form>
         <a href="/login">ログイン画面に戻る</a>

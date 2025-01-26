@@ -316,15 +316,6 @@ class AttendanceController extends Controller
 
     public function updateAttendance(Request $request)
     {
-        $validatedData = $request->validate([
-            'date' => 'required|date',
-            'employeeId' => 'required|integer',
-            'work_start' => 'nullable|date_format:H:i',
-            'work_end' => 'nullable|date_format:H:i',
-            'break_start' => 'nullable|date_format:H:i',
-            'break_end' => 'nullable|date_format:H:i',
-        ]);
-    
         // 打刻修正のデータを保存または更新
         $aditItems = [
             'work_start' => $request->work_start,

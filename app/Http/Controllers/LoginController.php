@@ -14,36 +14,30 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // if (Auth::attempt($request->only('email', 'password'))) {
-        //     return redirect()->route('staff')->with('success', 'ログインに成功しました');
-        // }
-
-        // if (Auth::guard('employees')->attempt($request->only('email', 'password'))) {
-        //     return redirect()->route('adit')->with('success', '従業員としてログインしました');
-        // }
-
         $user = User::where('email', $request->email)->first();
         session()->flush();
+        if ($user && Hash::check($request->password, $user->password)) {
+            Auth::login($user);
+            return redirect()->route('staff')
+            ->with('success', 'ログインに成功しました');
+        }
+        $employees = Employee::join('users', 'users.id', '=', 'employees.company_id')
+        ->select('employees.*')
+        ->where('users.email', $request->email)
+        ->get()
+        ->keyBy('id');
+        $matchedEmployee = $employees->first(function ($employee) use ($request) {
+            return Hash::check($request->password, $employee->password);
+        });
 
-        if ($user) {
-            // Usersテーブルのパスワードを確認
-            $employee = Employee::Join('users', 'users.id', '=', 'employees.company_id')
-            ->select('employees.*')
-            ->where('users.email', $request->email)
-            ->first();
-            if (Hash::check($request->password, $user->password)) {
-                Auth::login($user);
-                return redirect()->route('staff')
-                ->with('success', 'ログインに成功しました')
-                ->cookie('email', $request->email, 43200);
-            } elseif ($employee && Hash::check($request->password, $employee->password)) {
-                session(['lastActivityTime' => now()->timestamp]);
-                Auth::guard('employees')->login($employee);
-                return redirect()->route('adit')->with('success', '従業員としてログインしました')
-                ->cookie('email', $request->email, 43200);
-            } else {
-                return back()->withErrors(['email' => 'メールアドレスまたはパスワードが間違っています']); 
-            }
+
+        // 取得した従業員をループで確認
+        if ($matchedEmployee) {
+            // 該当する従業員が見つかった場合ログイン処理
+            session(['lastActivityTime' => now()->timestamp]); // 最終アクティビティを記録
+            Auth::guard('employees')->login($matchedEmployee);
+            return redirect()->route('adit')
+                ->with('success', '従業員としてログインしました');
         }
 
         return back()->withErrors(['email' => 'メールアドレスまたはパスワードが間違っています']);
@@ -60,22 +54,39 @@ class LoginController extends Controller
 
     public function resetPassword(Request $request)
     {
-        // $validated = $request->validate([
-        //     'email' => 'required|email|exists:employees,email', // メールが必須かつ従業員テーブルに存在することを確認
-        //     'new_password' => 'required|string|min:3|confirmed', // 確認用フィールドを追加
-        // ]);
+        $validated = $request->validate(
+            [
+                'mail' => 'required|email',
+                'new_password' => 'required|string|min:3|confirmed',
+            ],
+            [
+                'mail.required' => 'メールアドレスを入力してください。',
+                'mail.email' => '有効なメールアドレスを入力してください。',
+                'new_password.required' => '新しいパスワードを入力してください。',
+                'new_password.min' => 'パスワードは最低3文字以上必要です。',
+                'new_password.confirmed' => '確認用パスワードが一致しません。',
+            ]
+        );
     
         // メールアドレスで従業員を検索
-        $employee = User::where('email', $request['mail'])->first();
-        // dd($employee);
+        $admin = User::where('email', $request['mail'])->first();
+        $employee = Employee::where('email', $request['mail'])->first();
     
-        if (!$employee) {
-            return redirect()->back()->with('error', '従業員が見つかりませんでした。');
+        if (!$admin && !$employee) {
+            return redirect()->back()->with('error', '入力されたメールアドレスが登録されてません。');
         }
     
-        // 新しいパスワードをハッシュ化して保存
-        $employee->password = bcrypt($request['new_password']);
-        $employee->save();
+        if ($admin) {
+            // 新しいパスワードをハッシュ化して保存
+            $admin->password = bcrypt($request['new_password']);
+            $admin->save();
+        }
+    
+        if ($employee) {
+            // 新しいパスワードをハッシュ化して保存
+            $employee->password = bcrypt($request['new_password']);
+            $employee->save();
+        }
     
         return redirect()->back()->with('success', 'パスワードが正常にリセットされました。');
     }    

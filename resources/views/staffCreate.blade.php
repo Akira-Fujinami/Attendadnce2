@@ -60,6 +60,12 @@
             box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
 
+        .error {
+            color: red;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
         .button-group {
             display: flex;
             justify-content: space-between;
@@ -98,31 +104,49 @@
             @csrf
             <div class="form-group">
                 <label for="name">名前:</label>
-                <input type="text" id="name" name="name" placeholder="例: 山田 太郎">
+                <input type="text" id="name" name="name" value="{{ old('name') }}" placeholder="例: 山田 太郎">
+                @error('name')
+                    <p class="error">{{ $message }}</p>
+                @enderror
             </div>
             <div class="form-group">
                 <label for="email">メールアドレス:</label>
-                <input type="email" id="email" name="email" placeholder="例: yamada@example.com">
+                <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="例: yamada@example.com">
+                @error('email')
+                    <p class="error">{{ $message }}</p>
+                @enderror
             </div>
             <div class="form-group">
-                <label for="name">交通費:</label>
-                <input type="text" id="transportation" name="transportation" placeholder="例: ￥1000">
+                <label for="transportation">交通費:</label>
+                <input type="text" id="transportation" name="transportation" value="{{ old('transportation') }}" placeholder="例: 1000">
+                @error('transportation')
+                    <p class="error">{{ $message }}</p>
+                @enderror
             </div>
             <div class="form-group">
-                <label for="name">時給:</label>
-                <input type="text" id="wage" name="wage" placeholder="例: ￥1100">
+                <label for="wage">時給:</label>
+                <input type="text" id="wage" name="wage" value="{{ old('wage') }}" placeholder="例: 1100">
+                @error('wage')
+                    <p class="error">{{ $message }}</p>
+                @enderror
             </div>
             <div class="form-group">
                 <label for="password">パスワード:</label>
                 <input type="password" id="password" name="password" placeholder="パスワードを入力">
+                @error('password')
+                    <p class="error">{{ $message }}</p>
+                @enderror
             </div>
             <div class="form-group">
                 <label for="status">在籍状況:</label>
                 <select id="status" name="status">
-                    <option value="active">在籍中</option>
-                    <option value="inactive">休職中</option>
-                    <option value="resigned">退職</option>
+                    <option value="在職中" {{ old('status') === '在職中' ? 'selected' : '' }}>在職中</option>
+                    <option value="休職中" {{ old('status') === '休職中' ? 'selected' : '' }}>休職中</option>
+                    <option value="退職済み" {{ old('status') === '退職済み' ? 'selected' : '' }}>退職</option>
                 </select>
+                @error('status')
+                    <p class="error">{{ $message }}</p>
+                @enderror
             </div>
             <div class="button-group">
                 <button type="submit" class="submit-btn">追加する</button>

@@ -117,6 +117,31 @@ class StaffController extends Controller
     }
     
     public function create(Request $request) {
+        // 入力値のバリデーション
+        $validatedData = $request->validate(
+            [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:employees,email,',
+                'password' => 'nullable|string|min:3',
+                'transportation' => 'required|numeric',
+                'wage' => 'required|numeric',
+                'retired' => 'required|string|in:在職中,退職済み',
+            ],
+            [
+                'name.required' => '名前を入力してください。',
+                'name.max' => '名前は255文字以内で入力してください。',
+                'email.required' => 'メールアドレスを入力してください。',
+                'email.email' => '有効なメールアドレスを入力してください。',
+                'email.unique' => '入力されたメールアドレスは既に登録されています。',
+                'password.min' => 'パスワードは最低3文字以上で入力してください。',
+                'transportation.required' => '交通費を入力してください。',
+                'transportation.numeric' => '交通費は数値で入力してください。',
+                'wage.required' => '時給を入力してください。',
+                'wage.numeric' => '時給は数値で入力してください。',
+                'retired.required' => '在籍状況を選択してください。',
+                'retired.in' => '在籍状況は「在職中」または「退職済み」を選択してください。',
+            ]
+        );
         Employee::create([
             'company_id' => Auth::User()->id,
             'name' => $request->name,
@@ -133,14 +158,31 @@ class StaffController extends Controller
     public function update(Request $request, $id)
     {
         // 入力値のバリデーション
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:employees,email,' . $id,
-            'password' => 'nullable|string|min:3',
-            'transportation_fee' => 'required|numeric',
-            'hourly_wage' => 'required|numeric',
-            'retired' => 'required|string|in:在職中,退職済み',
-        ]);
+        $validatedData = $request->validate(
+            [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:employees,email,' . $id,
+                'password' => 'nullable|string|min:3',
+                'transportation_fee' => 'required|numeric',
+                'hourly_wage' => 'required|numeric',
+                'retired' => 'required|string|in:在職中,退職済み',
+            ],
+            [
+                'name.required' => '名前を入力してください。',
+                'name.max' => '名前は255文字以内で入力してください。',
+                'email.required' => 'メールアドレスを入力してください。',
+                'email.email' => '有効なメールアドレスを入力してください。',
+                'email.unique' => '入力されたメールアドレスは既に登録されています。',
+                'password.min' => 'パスワードは最低3文字以上で入力してください。',
+                'transportation_fee.required' => '交通費を入力してください。',
+                'transportation_fee.numeric' => '交通費は数値で入力してください。',
+                'hourly_wage.required' => '時給を入力してください。',
+                'hourly_wage.numeric' => '時給は数値で入力してください。',
+                'retired.required' => '在籍状況を選択してください。',
+                'retired.in' => '在籍状況は「在職中」または「退職済み」を選択してください。',
+            ]
+        );
+        
     
         // 更新対象の従業員レコードを取得
         $employee = Employee::find($id);

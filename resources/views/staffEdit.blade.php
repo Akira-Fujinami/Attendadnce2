@@ -42,8 +42,8 @@
         input[type="password"],
         select {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
+            padding: 7px;
+            margin-bottom: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 1em;
@@ -71,13 +71,11 @@
             background-color: #0056b3;
         }
 
-        .cancel-btn {
-            background-color: #6c757d;
-            color: #fff;
-        }
-
-        .cancel-btn:hover {
-            background-color: #5a6268;
+        .error {
+            color: red;
+            font-size: 0.85em;
+            margin-top: -10px;
+            margin-bottom: 10px;
         }
 
         .back-link {
@@ -104,30 +102,47 @@
             @method('PUT')
 
             <label for="name">名前</label>
-            <input type="text" id="name" name="name" value="{{ $employee->name }}">
+            <input type="text" id="name" name="name" value="{{ old('name', $employee->name) }}">
+            @error('name')
+                <p class="error">{{ $message }}</p>
+            @enderror
 
             <label for="email">メールアドレス</label>
-            <input type="email" id="email" name="email" value="{{ $employee->email }}">
+            <input type="email" id="email" name="email" value="{{ old('email', $employee->email) }}">
+            @error('email')
+                <p class="error">{{ $message }}</p>
+            @enderror
 
             <label for="password">パスワード</label>
             <input type="password" id="password" name="password" placeholder="パスワードを変更する場合入力">
+            @error('password')
+                <p class="error">{{ $message }}</p>
+            @enderror
 
             <label for="transportation_fee">交通費</label>
-            <input type="text" id="transportation_fee" name="transportation_fee" value="{{ $employee->transportation_fee }}">
+            <input type="text" id="transportation_fee" name="transportation_fee" value="{{ old('transportation_fee', $employee->transportation_fee) }}">
+            @error('transportation_fee')
+                <p class="error">{{ $message }}</p>
+            @enderror
 
             <label for="hourly_wage">時給</label>
-            <input type="text" id="hourly_wage" name="hourly_wage" value="{{ $employee->hourly_wage }}">
+            <input type="text" id="hourly_wage" name="hourly_wage" value="{{ old('hourly_wage', $employee->hourly_wage) }}">
+            @error('hourly_wage')
+                <p class="error">{{ $message }}</p>
+            @enderror
 
             <label for="retired">在籍状況</label>
             <select id="retired" name="retired">
-                <option value="在職中" {{ $employee->retired === '在職中' ? 'selected' : '' }}>在職中</option>
-                <option value="休職中" {{ $employee->retired === '休職中' ? 'selected' : '' }}>休職中</option>
-                <option value="退職済み" {{ $employee->retired === '退職済み' ? 'selected' : '' }}>退職済み</option>
+                <option value="在職中" {{ old('retired', $employee->retired) === '在職中' ? 'selected' : '' }}>在職中</option>
+                <option value="休職中" {{ old('retired', $employee->retired) === '休職中' ? 'selected' : '' }}>休職中</option>
+                <option value="退職済み" {{ old('retired', $employee->retired) === '退職済み' ? 'selected' : '' }}>退職済み</option>
             </select>
+            @error('retired')
+                <p class="error">{{ $message }}</p>
+            @enderror
 
             <div class="form-actions">
                 <button type="submit" class="save-btn">保存する</button>
-                <button type="button" class="cancel-btn" onclick="window.location.href='{{ route('staffDetail', ['id' => $employee->id]) }}';">キャンセル</button>
             </div>
         </form>
 
