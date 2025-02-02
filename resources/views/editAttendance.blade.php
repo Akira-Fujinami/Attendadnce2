@@ -106,6 +106,19 @@
         .error-icon:hover::after {
             display: block;
         }
+        .add-break-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .add-break-section h2 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -133,10 +146,30 @@
         // `break_start` と `break_end` をまとめて時間順に並べ替える
         $combinedRecords = collect(array_merge(
             $records['break_start']['previousRecord'] ?? [],
-            $records['break_end']['previousRecord'] ?? []
+            $records['break_end']['previousRecord'] ?? [],
+            $records['break_start']['currentRecord'] ?? [],
+            $records['break_end']['currentRecord'] ?? []
         ))
-        ->unique(fn($item) => $item->id) // IDで重複排除
-        ->sortBy(fn($item) => \Carbon\Carbon::parse($item->minutes))
+        ->groupBy(function ($item) {
+            return $item->before_adit_id ?? $item->id; // before_adit_id があればそれをキーにグループ化
+        })
+        ->map(function ($group) {
+            // 最新のデータ（IDが一番大きいもの）
+            $latest = $group->sortByDesc('id')->first();
+
+            // 過去のデータ（before_adit_id が設定されているもの）
+            $before = $group->where('id', $latest->before_adit_id)->first();
+
+            return (object) [
+                'id' => $latest->id,
+                'adit_item' => $latest->adit_item,
+                'minutes' => $latest->minutes, // 最新の minutes
+                'status' => $latest->status, // 最新の status
+                'before_minutes' => $before ? $before->minutes : null, // 過去の before_minutes（実際に before_adit_id に紐づくデータ）
+                'before_status' => $before ? $before->status : null, // 過去の status
+            ];
+        })
+        ->sortBy(fn($item) => \Carbon\Carbon::parse($item->minutes ?? $item->before_minutes))
         ->values();
 
     @endphp
@@ -177,21 +210,21 @@
     {{-- 休憩関連のデータ --}}
     @if ($combinedRecords->isNotEmpty())
         @foreach ($combinedRecords as $breakRecord)
-            @php
-            $matchingCurrentRecord = collect(array_merge(
-                $records['break_start']['currentRecord'] ?? [],
-                $records['break_end']['currentRecord'] ?? []
-            ))->firstWhere('before_adit_id', $breakRecord->id);
-            @endphp
             <tr>
                 <td>
-                    @if ($matchingCurrentRecord)
+                    @if ($breakRecord->status == 'pending' or $breakRecord->before_status == 'pending')
                         <span class="error-icon">&#33;</span>
                     @endif
                     {{ $breakRecord->adit_item === 'break_start' ? '休憩開始' : '休憩終了' }}
                 </td>
                 <td>
-                    {{ \Carbon\Carbon::parse($breakRecord->minutes)->format('H:i') }}
+                    @if ($breakRecord->status == 'approved')
+                        {{ $breakRecord->minutes ? \Carbon\Carbon::parse($breakRecord->minutes)->format('H:i') : '未登録' }}
+                    @elseif ($breakRecord->before_status == 'approved')
+                        {{ $breakRecord->before_minutes ? \Carbon\Carbon::parse($breakRecord->before_minutes)->format('H:i') : '未登録' }}
+                    @else
+                        {{'未登録'}}
+                    @endif
                 </td>
                 <td>
                     <form method="POST" action="{{ route('updateAttendance') }}">
@@ -202,66 +235,11 @@
                         <input type="hidden" name="adit_item" value="{{ $breakRecord->adit_item }}">
                         <input type="hidden" name="adit_id" value="{{ $breakRecord->id }}">
                         <input type="time" name="{{ $breakRecord->adit_item }}"
-                            value="{{ $matchingCurrentRecord ? \Carbon\Carbon::parse($matchingCurrentRecord->minutes)->format('H:i') : '' }}">
+                            value="{{ $breakRecord->status == 'pending' ? \Carbon\Carbon::parse($breakRecord->minutes)->format('H:i') : '' }}">
                         <button type="submit" class="save-btn">保存</button>
                     </form>
                 </td>
             </tr>
-        @endforeach
-    @else
-        @foreach ($records as $aditItem => $record)
-            @if (in_array($aditItem, ['break_start']))
-                <tr>
-                    <td>
-                        @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
-                            <span class="error-icon">&#33;</span>
-                        @endif
-                        {{ $labels['break_start'] }}
-                    </td>
-                    <td>
-                        未登録
-                    </td>
-                    <td>
-                        <form method="POST" action="{{ route('updateAttendance') }}">
-                            @csrf
-                            <input type="hidden" name="date" value="{{ $date }}">
-                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
-                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
-                            <input type="hidden" name="adit_item" value="{{ 'break_start' }}">
-                            <input type="time" name="{{ 'break_start' }}"
-                                value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
-                            <button type="submit" class="save-btn">保存</button>
-                        </form>
-                    </td>
-                </tr>
-            @endif
-        @endforeach
-        @foreach ($records as $aditItem => $record)
-            @if (in_array($aditItem, ['break_end']))
-                <tr>
-                    <td>
-                        @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
-                            <span class="error-icon">&#33;</span>
-                        @endif
-                        {{ $labels['break_end'] }}
-                    </td>
-                    <td>
-                        未登録
-                    </td>
-                    <td>
-                        <form method="POST" action="{{ route('updateAttendance') }}">
-                            @csrf
-                            <input type="hidden" name="date" value="{{ $date }}">
-                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
-                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
-                            <input type="hidden" name="adit_item" value="{{ 'break_end' }}">
-                            <input type="time" name="{{ 'break_end' }}"
-                                value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
-                            <button type="submit" class="save-btn">保存</button>
-                        </form>
-                    </td>
-                </tr>
-            @endif
         @endforeach
     @endif
     @foreach ($records as $aditItem => $record)
@@ -299,6 +277,28 @@
 
 
         </table>
+        <div class="add-break-section">
+            <h2>休憩打刻を追加</h2>
+            <form method="POST" action="{{ route('updateAttendance') }}">
+                @csrf
+                <input type="hidden" name="date" value="{{ $date }}">
+                <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+
+                <div class="form-group">
+                    <label for="break_start">休憩開始時間:</label>
+                    <input type="time" id="break_start" name="break_start">
+                </div>
+
+                <div class="form-group">
+                    <label for="break_end">休憩終了時間:</label>
+                    <input type="time" id="break_end" name="break_end">
+                </div>
+
+                <button type="submit" class="save-btn">追加する</button>
+            </form>
+       
+        </div>
         @elseif ($disable)
         <div style="text-align: center; margin: 20px 0; padding: 20px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px;">
             <strong>この日付の打刻データは未来日の為、修正できません。</strong>

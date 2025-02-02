@@ -164,13 +164,17 @@
         <input type="hidden" name="wage" value="{{ Auth::user()->hourly_wage }}">
         <input type="hidden" name="transportation" value="{{ Auth::user()->transportation_fee }}">
     </form>
-    @foreach($data['errors'] as $error)
-        <li>
-            <a href="{{ route('editAttendance', ['date' => $error['date'], 'employeeId' => Auth::User()->id]) }}" class="error-link">
-                {{ $error['date'] }}: {{ is_array($error['error']) ? implode(', ', $error['error']) : $error['error'] }}
-            </a>
-        </li>
-    @endforeach
+    @if(!empty($data['errors']))
+        @foreach($data['errors'] as $error)
+            <li>
+                <a href="{{ route('editAttendance', ['date' => $error['date'], 'employeeId' => Auth::User()->id]) }}" class="error-link">
+                    {{ $error['date'] }}: 
+                    <span class="error-message">打刻が不正です</span>
+                </a>
+            </li>
+        @endforeach
+    @endif
+
 
 </div>
 

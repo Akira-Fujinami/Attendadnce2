@@ -94,7 +94,6 @@ class AppliedAditController extends Controller
                 'total_break_hours' => 0,
                 'overtime_hours' => 0,
                 'salary' => 0,
-                'error_types' => null,
             ]
         );
         $aditExists = Adit::whereDate('date', $date)

@@ -62,6 +62,14 @@
         tr.pending-row {
             background-color: #fff3cd; /* 承認待ちの背景色（薄い黄色） */
         }
+
+        tr.approved-row {
+            background-color: #d4edda; /* 承認済みの背景色（薄い緑） */
+        }
+
+        tr.rejected-row {
+            background-color: #f8d7da; /* 却下済みの背景色（薄い赤） */
+        }
     </style>
 </head>
 <body>
@@ -78,7 +86,7 @@
             </thead>
             <tbody>
                 @foreach ($aditRecords as $record)
-                <tr class="{{ $record->status === 'pending' ? 'pending-row' : '' }}">
+                <tr class="{{ $record->status === 'pending' ? 'pending-row' : ($record->status === 'approved' ? 'approved-row' : ($record->status === 'rejected' ? 'rejected-row' : '')) }}">
                     <td>{{ \Carbon\Carbon::parse($record->minutes)->format('H:i') }}</td>
                     <td>
                         @switch($record->adit_item)
@@ -113,7 +121,6 @@
                                 不明
                         @endswitch
                     </td>
-
                 </tr>
                 @endforeach
             </tbody>

@@ -51,27 +51,18 @@ class AditController extends Controller
         
         // 退勤打刻がない日付をチェック
         $missingWorkEndDates = collect();
-        
-        foreach ($aditRecords as $date => $records) {
-            $workStartExists = $records->contains('adit_item', 'work_start');
-            $breakStartExists = $records->contains('adit_item', 'break_start');
-            $breakEndExists = $records->contains('adit_item', 'break_end');
-            $workEndExists = $records->contains('adit_item', 'work_end');
-        
-            if (($workStartExists || $breakStartExists || $breakEndExists) && !$workEndExists) {
-                $missingWorkEndDates->push($date);
-            }
-        }
+
         $errors = [];
         // エラーに追加
-        foreach ($missingWorkEndDates as $missingDate) {
-            $errors[] = [
-                'date' => $missingDate,
-                'error' => '退勤打刻がありません',
-            ];
-        }        
-        // dd($errors);
-        
+        foreach ($aditRecords as $date => $records) {
+            $errorExists = self::error($user->company_id, $user->id, $date);
+            if ($errorExists) {
+                $errors[] = [
+                    'date' => $date,
+                    'error' => self::error($user->company_id, $user->id, $date),
+                ];
+            }
+        }
 
         // dd($latestAdit);
         $data = [
@@ -107,7 +98,6 @@ class AditController extends Controller
                 'total_break_hours' => 0,
                 'overtime_hours' => 0,
                 'salary' => 0,
-                'error_types' => null,
             ]
         );
         $today = now()->format('Y-m-d');
@@ -196,19 +186,97 @@ class AditController extends Controller
 
     public static function calculateSalary($wage, $transportation, $totalWorkHours)
     {
-        // 給与を計算
+        // 勤務時間が0以下の場合は給与を0とする
         if ($totalWorkHours <= 0) {
             return 0;
         }
-        $regularHours = min($totalWorkHours, 8); // 通常の勤務時間は最大8時間
-        $overtimeHours = max($totalWorkHours - 8, 0); // 8時間を超えた分
     
-        $regularPay = $regularHours * $wage; // 通常の給与
-        $overtimePay = $overtimeHours * $wage * 1.25; // 1.25倍の割増給与
+        // 通常の給与を計算
+        $regularPay = $totalWorkHours * $wage;
     
-        $salary = $regularPay + $overtimePay + $transportation;
+        // 総給与を計算（交通費を加算）
+        $salary = $regularPay + $transportation;
     
         return $salary;
     }
+
+    public static function error($companyId, $employeeId, $date) {
+        // 指定された日付の打刻データを取得
+        $records = Adit::where('company_id', $companyId)
+            ->where('employee_id', $employeeId)
+            ->whereDate('date', $date)
+            ->orderBy('minutes') // 時刻順にソート
+            ->get(['adit_item', 'minutes']); // 必要なカラムのみ取得
+    
+        // データがない場合はエラーなし
+        if ($records->isEmpty()) {
+            return null;
+        }
+    
+        // 各打刻を分類
+        $workStart = null;
+        $workEnd = null;
+        $breaks = [];
+    
+        foreach ($records as $record) {
+            $time = \Carbon\Carbon::parse($record->minutes);
+    
+            if ($record->adit_item === 'work_start') {
+                $workStart = $time;
+            } elseif ($record->adit_item === 'work_end') {
+                $workEnd = $time;
+            } elseif ($record->adit_item === 'break_start') {
+                $breaks[] = ['start' => $time, 'end' => null]; // 休憩開始
+            } elseif ($record->adit_item === 'break_end') {
+                // 直前の未終了の休憩を探して終了時間をセット
+                foreach ($breaks as &$break) {
+                    if ($break['end'] === null) {
+                        $break['end'] = $time;
+                        break;
+                    }
+                }
+            }
+        }
+    
+        // **エラーチェック**
+        // 1. 出勤より前に休憩開始がある
+        foreach ($breaks as $break) {
+            if ($workStart && $break['start'] < $workStart) {
+                return 1;
+            }
+        }
+
+        if (!$workStart || !$workEnd) {
+            return 1; // 退勤が登録されていない
+        }
+    
+        // 2. 休憩終了が休憩開始より前になっている
+        foreach ($breaks as $break) {
+            if ($break['end'] && $break['end'] < $break['start']) {
+                return 1;
+            }
+        }
+    
+        // 3. 休憩終了がない場合（未ペアの break_start がある）
+        foreach ($breaks as $break) {
+            if ($break['end'] === null) {
+                return 1;
+            }
+        }
+    
+        // 4. 退勤が出勤より前
+        if ($workStart && $workEnd && $workEnd < $workStart) {
+            return 1;
+        }
+    
+        // 5. 休憩終了より退勤が前
+        foreach ($breaks as $break) {
+            if ($break['end'] && $workEnd && $workEnd < $break['end']) {
+                return 1;
+            }
+        }
+    
+        return null; // エラーなし
+    }    
 
 }

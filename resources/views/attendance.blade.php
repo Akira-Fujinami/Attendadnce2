@@ -89,7 +89,7 @@
         }
 
         .error-icon::after {
-            content: "打刻が不足してます";
+            content: "打刻が不正です";
             position: absolute;
             left: 50%;
             transform: translateX(-50%);

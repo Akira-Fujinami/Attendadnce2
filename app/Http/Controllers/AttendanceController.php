@@ -60,7 +60,7 @@ class AttendanceController extends Controller
                                 $hasWorkEnd = $records->contains('adit_item', 'work_end');
                         
                                 // エラーフラグを追加
-                                $error = !$hasWorkStart || !$hasWorkEnd;
+                                $error = AditController::error(Auth::User()->company_id, Auth::User()->id, $date);
                                 $sum = DailySummary::where('employee_id', Auth::User()->id)
                                     ->where('company_id', Auth::User()->company_id)
                                     ->where('date', $date)
@@ -225,16 +225,9 @@ class AttendanceController extends Controller
             ->where('employee_id', $employeeId)
             ->get();
         
-            // 退勤打刻がない日付をチェック
-            $missingWorkEndDates = collect();
-            
-            $workStartExists = $aditRecords->contains('adit_item', 'work_start');
-            $breakStartExists = $aditRecords->contains('adit_item', 'break_start');
-            $breakEndExists = $aditRecords->contains('adit_item', 'break_end');
-            $workEndExists = $aditRecords->contains('adit_item', 'work_end');
-        
-            if (($workStartExists || $breakStartExists || $breakEndExists) && !$workEndExists) {
-                $error = "退勤打刻がありません";
+            $errorExist = AditController::error(Auth::User()->id, $employeeId, $summary->date);
+            if ($errorExist) {
+                $error = "打刻が不正です";
             }
 
             $pendingStatusExists = $aditRecords->contains('status', 'pending');
@@ -335,7 +328,7 @@ class AttendanceController extends Controller
             ->whereDate('date', $request->date)
             ->where('adit_item', $request->adit_item)
             ->where('status', 'pending')
-            ->where('before_adit_id', $request->adit_id)
+            ->where('id', $request->adit_id)
             ->first();
 
             // dd($attendanceRecord);
@@ -359,7 +352,7 @@ class AttendanceController extends Controller
         } else {
             // レコードが存在しない場合は新規作成
             foreach ($aditItems as $aditItem => $time) {
-                // dd($aditItems);
+                // dd($request->adit_id);
                 Adit::create([
                     'company_id' => $request->companyId,
                     'employee_id' => $request->employeeId,
@@ -446,7 +439,6 @@ class AttendanceController extends Controller
         // 指定日の打刻データを取得
         $aditRecords = Adit::where('employee_id', $employeeId)
             ->where('company_id', $companyId)
-            ->where('status', 'approved')
             ->where('date', $date)
             ->orderBy('minutes', 'asc')
             ->get();
