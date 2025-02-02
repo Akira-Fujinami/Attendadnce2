@@ -139,17 +139,17 @@
     </div>
 
     <div class="container">
-            <div style="margin-top: 20px; font-size: 1.5em;
+        <h1>{{ Auth::user()->name }} さん</h1>
+        <div class="time-display" id="current-time">
+            <!-- 時間がここに表示されます -->
+        </div>
+        <div style="margin-top: 20px; font-size: 1.5em;
             @if($data['latestAdit'] == 'work_start') color: #28a745; 
                @elseif($data['latestAdit'] == 'break_start') color: #ffc107
                @elseif($data['latestAdit'] == 'break_end') color: #28a745
                @elseif($data['latestAdit'] == 'work_end') color: #dc3545 
                @endif">
                 {{$data['status']}}
-            </div>
-        <h1>現在の時間</h1>
-        <div class="time-display" id="current-time">
-            <!-- 時間がここに表示されます -->
         </div>
 
         <div class="button-group">

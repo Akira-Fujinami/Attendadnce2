@@ -23,7 +23,7 @@ class AditController extends Controller
         $latestAdit = Adit::whereDate('date', $today)
             ->where('employee_id', $user->id)
             ->where('company_id', $user->company_id)
-            ->orderBy('created_at', 'desc') // 最新順にソート
+            ->orderBy('minutes', 'desc') // 最新順にソート
             ->first();
         $status = null;
         if ($latestAdit) {
@@ -205,6 +205,7 @@ class AditController extends Controller
         $records = Adit::where('company_id', $companyId)
             ->where('employee_id', $employeeId)
             ->whereDate('date', $date)
+            ->where('status', '!=', 'rejected')
             ->orderBy('minutes') // 時刻順にソート
             ->get(['adit_item', 'minutes']); // 必要なカラムのみ取得
     

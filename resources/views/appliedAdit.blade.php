@@ -146,8 +146,10 @@
                                     <input type="hidden" name="company_id" value="{{ Auth::user()->id }}">
                                     <input type="hidden" name="employee_id" value="{{ $record['id'] }}">
                                     <input type="hidden" name="date" value="{{ $record['date'] }}">
+                                    <input type="hidden" name="minutes" value="{{ $record['minutes'] }}">
                                     <input type="hidden" name="adit_id" value="{{ $record['adit_id'] }}">
                                     <input type="hidden" name="adit_item" value="{{ $record['adit_item'] }}">
+                                    <input type="hidden" name="before_adit_id" value="{{ $record['adit_id'] }}">
                                     <input type="hidden" name="wage" value="{{ $record['hourly_wage'] }}">
                                     <input type="hidden" name="transportation" value="{{ $record['transportation_fee'] }}">
                                     <button type="submit" class="btn btn-approve">承認</button>
@@ -158,7 +160,9 @@
                                     <input type="hidden" name="company_id" value="{{ Auth::user()->id }}">
                                     <input type="hidden" name="employee_id" value="{{ $record['id'] }}">
                                     <input type="hidden" name="date" value="{{ $record['date'] }}">
+                                    <input type="hidden" name="minutes" value="{{ $record['minutes'] }}">
                                     <input type="hidden" name="adit_item" value="{{ $record['adit_item'] }}">
+                                    <input type="hidden" name="before_adit_id" value="{{ $record['adit_id'] }}">
                                     <button type="submit" class="btn btn-reject">却下</button>
                                 </form>
                                 @endif

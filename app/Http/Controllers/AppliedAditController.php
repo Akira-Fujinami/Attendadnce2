@@ -24,7 +24,7 @@ class AppliedAditController extends Controller
                             ->groupBy('date') // 日付ごとにグループ化
                             ->map(function ($records) {
                                 return $records->map(function ($record) use ($records) {
-                                    $previousApproved = Adit::where('employee_id', $record->employee_id)->where('date', $record->date)->where('status', 'approved')->where('adit_item', $record->adit_item)->first();
+                                    $previousApproved = Adit::where('employee_id', $record->employee_id)->where('date', $record->date)->where('status', 'approved')->where('adit_item', $record->adit_item)->where('id', $record->before_adit_id)->first();
                         
                                     return [
                                         'date' => $record->date,
@@ -42,7 +42,6 @@ class AppliedAditController extends Controller
                             })
                             ->toArray();
                         
-            // dd($pendingRecords);
     
         return view('appliedAdit', [
             'pendingRecords' => $pendingRecords,
@@ -55,7 +54,7 @@ class AppliedAditController extends Controller
     {
         $pendingAdits = Adit::where('company_id', $request->company_id)
             ->where('employee_id', $request->employee_id)
-            ->where('date', $request->date)
+            ->where('minutes', $request->minutes)
             ->where('adit_item', $request->adit_item)
             ->where('status', 'pending')
             ->get();
@@ -66,6 +65,7 @@ class AppliedAditController extends Controller
             ->where('date', $request->date)
             ->where('adit_item', $request->adit_item)
             ->where('status', 'approved')
+            ->where('id', $request->before_adit_id)
             ->when($request->adit_id, function ($query, $adit_id) {
                 return $query->where('id', $adit_id);
             })
@@ -121,7 +121,7 @@ class AppliedAditController extends Controller
     {
         $adits = Adit::where('company_id', $request->company_id)
         ->where('employee_id', $request->employee_id)
-        ->where('minutes', $request->date)
+        ->where('minutes', $request->minutes)
         ->where('adit_item', $request->adit_item)
         ->where('status', 'pending')
         ->get();
