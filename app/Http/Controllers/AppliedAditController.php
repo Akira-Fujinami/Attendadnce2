@@ -25,6 +25,13 @@ class AppliedAditController extends Controller
                             ->map(function ($records) {
                                 return $records->map(function ($record) use ($records) {
                                     $previousApproved = Adit::where('employee_id', $record->employee_id)->where('date', $record->date)->where('status', 'approved')->where('adit_item', $record->adit_item)->where('id', $record->before_adit_id)->first();
+                                    if ($record->deleted == 1) {
+                                        $previous_time = $record->minutes;
+                                        $current_time = '削除';
+                                    } else {
+                                        $previous_time = $previousApproved->minutes ?? 'なし';
+                                        $current_time = $record->minutes;
+                                    }
                         
                                     return [
                                         'date' => $record->date,
@@ -35,12 +42,14 @@ class AppliedAditController extends Controller
                                         'adit_id' => $record->before_adit_id,
                                         'minutes' => $record->minutes,
                                         'adit_item' => $record->adit_item,
-                                        'previous_time' => $previousApproved->minutes ?? 'なし',
-                                        'current_time' => $record->minutes,
+                                        'previous_time' => $previous_time,
+                                        'current_time' => $current_time,
+                                        'deleted' => $record->deleted,
                                     ];
                                 });
                             })
                             ->toArray();
+                            // dd($pendingRecords);
                         
     
         return view('appliedAdit', [
@@ -100,7 +109,7 @@ class AppliedAditController extends Controller
         ->where('company_id', $request->company_id)
         ->where('employee_id', $request->employee_id)
         ->exists();
-        if ($aditExists) {
+        if ($aditExists && !AditController::error($request->company_id, $request->employee_id, $date)) {
             $totalBreakHours = AditController::calculateBreakHours($request->company_id, $request->employee_id, $date);
             $totalWorkHours = AditController::calculateWorkHours($request->company_id, $request->employee_id, $date, $totalBreakHours);
             // 給与を計算
@@ -119,18 +128,57 @@ class AppliedAditController extends Controller
 
     public function rejectAdit(Request $request)
     {
-        $adits = Adit::where('company_id', $request->company_id)
+        $adit = Adit::where('company_id', $request->company_id)
         ->where('employee_id', $request->employee_id)
         ->where('minutes', $request->minutes)
         ->where('adit_item', $request->adit_item)
         ->where('status', 'pending')
-        ->get();
+        ->first();
+        if ($adit['deleted'] == 1) {
+            $adit->update([
+                'status' => 'approved',
+                'deleted' => 0,
+            ]);
+            $date = date('Y-m-d', strtotime($request->date));
+            $dailySummary = DailySummary::firstOrCreate(
+                [
+                    'company_id' => $request->company_id,
+                    'employee_id' => $request->employee_id,
+                    'date' => $date,
+                ],
+                [
+                    'company_id' => $request->company_id,
+                    'employee_id' => $request->employee_id,
+                    'date' => $date,
+                    'total_work_hours' => 0,
+                    'total_break_hours' => 0,
+                    'overtime_hours' => 0,
+                    'salary' => 0,
+                ]
+            );
+            $aditExists = Adit::whereDate('date', $date)
+            ->where('company_id', $request->company_id)
+            ->where('employee_id', $request->employee_id)
+            ->exists();
+            if ($aditExists && !AditController::error($request->company_id, $request->employee_id, $date)) {
+                $totalBreakHours = AditController::calculateBreakHours($request->company_id, $request->employee_id, $date);
+                $totalWorkHours = AditController::calculateWorkHours($request->company_id, $request->employee_id, $date, $totalBreakHours);
+                // 給与を計算
+                $salary = AditController::calculateSalary($request->wage, $request->transportation, $totalWorkHours, $totalBreakHours);
+    
+                $dailySummary->update([
+                'total_work_hours' => $totalWorkHours,
+                'total_break_hours' => $totalBreakHours,
+                'overtime_hours' => max($totalWorkHours - 8, 0), // 8時間以上の場合は残業
+                'salary' => $salary, // 給与計算ロジック
+                ]);
+            }
+            return back();
+        }
         // $adit = Adit::findOrFail($id);
 
         // 却下処理
-        foreach ($adits as $adit) {
-            $adit->update(['status' => 'rejected']);
-        }
+        $adit->update(['status' => 'rejected']);
 
         return back()->with('success', '打刻が却下されました。');
     }

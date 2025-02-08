@@ -75,7 +75,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>{{ $event->name ?? 'イベントごとの出勤簿' }}</h1>
+    <h1>{{ $event->name ?? 'イベントごとの出勤簿' }}</h1>
+
+    <!-- イベント関連のナビゲーションリンク -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <a href="{{ route('events.create') }}" class="btn">イベントを作成</a>
+    </div>
 
         <!-- イベント選択 -->
         <div class="dropdown">

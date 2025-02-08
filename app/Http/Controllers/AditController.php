@@ -105,7 +105,7 @@ class AditController extends Controller
                         ->where('company_id', $request->company_id)
                         ->where('employee_id', $request->employee_id)
                         ->exists();
-        if ($aditExists) {
+        if ($aditExists && !self::error($request->company_id, $request->employee_id, $today)) {
             $totalBreakHours = $this->calculateBreakHours($request->company_id, $request->employee_id, $today);
             $totalWorkHours = $this->calculateWorkHours($request->company_id, $request->employee_id, $today, $totalBreakHours);
             // 給与を計算

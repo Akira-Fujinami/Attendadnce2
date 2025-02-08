@@ -129,7 +129,13 @@
                                     {{ $record['previous_time'] }}
                                 @endif
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($record['current_time'])->format('H:i') }}</td>
+                            <td>    
+                                @if ($record['current_time'] !== '削除')
+                                    {{ \Carbon\Carbon::parse($record['current_time'])->format('H:i') }}
+                                @else
+                                    {{ $record['current_time'] }}
+                                @endif
+                            </td>
                             <td>
                                 @php
                                     $aditLabels = [
