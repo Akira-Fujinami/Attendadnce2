@@ -108,6 +108,57 @@
         .error-icon:hover::after {
             display: block;
         }
+
+        /* エラー行の通常状態 */
+    .error-row {
+        background-color: #ff69b4; /* ピンク背景 */
+        position: relative;
+        transition: background-color 0.3s ease;
+    }
+
+    /* ホバー時に背景色を強調 */
+    .error-row:hover {
+        background-color: #ff3366; /* より濃いピンク */
+        box-shadow: 0px 0px 15px rgba(255, 51, 102, 0.75);
+    }
+
+    /* ツールチップのデザイン */
+    .error-tooltip {
+        position: absolute;
+        visibility: hidden;
+        width: 220px;
+        background-color: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+        border-radius: 5px;
+        bottom: 110%; /* 上に表示 */
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        font-size: 0.9em;
+        z-index: 10;
+    }
+
+    /* 行にカーソルを合わせた際にツールチップを表示 */
+    .error-row:hover .error-tooltip {
+        visibility: visible;
+        opacity: 1;
+        transform: translateX(-50%) translateY(-5px);
+    }
+
+    /* エラーアイコンの点滅 */
+    @keyframes blink {
+        50% { opacity: 0; }
+    }
+    .error-icon {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: red;
+        animation: blink 1s infinite;
+        cursor: help;
+    }
     </style>
 </head>
 <body>
@@ -131,12 +182,13 @@
             </thead>
             <tbody>
                 @foreach ($attendanceData as $data)
-                <tr>
+                <tr @if (!empty($data['error']))
+                    class="error-row"
+                    @endif>
                     <td>@if (!empty($data['error']))
-                            @php
-                            $errorText = is_array($data['error']) ? implode(', ', $data['error']) : $data['error'];
-                        @endphp
-                        <span class="error-icon" title="{{ $errorText }}">&#33;</span>
+                            <span class="error-tooltip">
+                                打刻が不正です
+                            </span>
                         @endif
                         <a href="{{ route('attendanceDetails', ['date' => $data['date'], 'employeeId' => $employee->id, 'companyId' => $employee->company_id]) }}">
                             {{ $data['date'] }}

@@ -164,7 +164,100 @@
             padding: 8px 12px;
             font-size: 0.9em;
         }
+         /* エラー行の通常状態 */
+        .error-row {
+            background-color: #ffeb3b; /* ピンク背景 */
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        /* ホバー時に背景色を強調 */
+        .error-row:hover {
+            background-color: #fff9c4; /* より濃いピンク */
+            box-shadow: 0px 0px 15px rgba(255, 241, 118, 0.75);
+        }
+
+        /* ツールチップのデザイン */
+        .error-tooltip {
+            position: absolute;
+            visibility: hidden;
+            width: 220px;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            bottom: 110%; /* 上に表示 */
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            font-size: 0.9em;
+            z-index: 10;
+        }
+
+        /* 行にカーソルを合わせた際にツールチップを表示 */
+        .error-row:hover .error-tooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        /* エラーアイコンの点滅 */
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .error-icon {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: red;
+            animation: blink 1s infinite;
+            cursor: help;
+        }
+        /* 休憩打刻追加セクション（デフォルト非表示） */
+        .add-break-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-break-section:hover {
+            background-color: #e8f0fe; /* ホバー時に少し色をつける */
+        }
+
+        /* 実際のフォーム部分（デフォルト非表示） */
+        .break-form {
+            display: none;
+            padding-top: 10px;
+        }
+
+        /* アニメーション効果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .show {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
     </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const addBreakSection = document.querySelector(".add-break-section");
+            const breakForm = document.querySelector(".break-form");
+
+            addBreakSection.addEventListener("click", function () {
+                breakForm.classList.add("show"); // 表示のみ（非表示にはしない）
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -223,12 +316,18 @@
     {{-- 出勤・退勤 --}}
     @foreach ($records as $aditItem => $record)
         @if (in_array($aditItem, ['work_start']))
-            <tr>
+            <tr @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
+                    class="error-row"
+                @endif>
                 <td>
                     @if (!empty($record['currentRecord']) && $record['currentRecord'][0]['status'] == 'pending' and $record['currentRecord'][0]['deleted'] == 1)
-                        <span class="error-icon-deleted">&#33;</span>
+                        <span class="error-tooltip">
+                            削除待ちの打刻です
+                        </span>
                     @elseif (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
-                        <span class="error-icon">&#33;</span>
+                        <span class="error-tooltip">
+                            未承認の打刻です
+                        </span>
                     @endif
                     {{ $labels[$aditItem] }}
                 </td>
@@ -277,12 +376,18 @@
     {{-- 休憩関連のデータ --}}
     @if ($combinedRecords->isNotEmpty())
         @foreach ($combinedRecords as $breakRecord)
-            <tr>
+            <tr @if ($breakRecord->status == 'pending')
+                    class="error-row"
+                @endif>
                 <td>
                     @if ($breakRecord->status == 'pending' and $breakRecord->deleted == 1)
-                        <span class="error-icon-deleted">&#33;</span>
+                        <span class="error-tooltip">
+                            削除待ちの打刻です
+                        </span>
                     @elseif ($breakRecord->status == 'pending' or $breakRecord->before_status == 'pending')
-                        <span class="error-icon">&#33;</span>
+                        <span class="error-tooltip">
+                            未承認の打刻です
+                        </span>
                     @endif
                     {{ $breakRecord->adit_item === 'break_start' ? '休憩開始' : '休憩終了' }}
                 </td>
@@ -330,12 +435,18 @@
     @endif
     @foreach ($records as $aditItem => $record)
         @if (in_array($aditItem, ['work_end']))
-            <tr>
+            <tr @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
+                    class="error-row"
+                @endif>
                 <td>
                     @if (!empty($record['currentRecord']) && $record['currentRecord'][0]['status'] == 'pending' and $record['currentRecord'][0]['deleted'] == 1)
-                        <span class="error-icon-deleted">&#33;</span>
+                        <span class="error-tooltip">
+                            削除待ちの打刻です
+                        </span>
                     @elseif (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
-                        <span class="error-icon">&#33;</span>
+                        <span class="error-tooltip">
+                            未承認の打刻です
+                        </span>
                     @endif
                     {{ $labels[$aditItem] }}
                 </td>
@@ -385,24 +496,26 @@
         </table>
         <div class="add-break-section">
             <h2>休憩打刻を追加</h2>
-            <form method="POST" action="{{ route('updateAttendance') }}">
-                @csrf
-                <input type="hidden" name="date" value="{{ $date }}">
-                <input type="hidden" name="employeeId" value="{{ $employeeId }}">
-                <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+            <div class="break-form">
+                <form method="POST" action="{{ route('updateAttendance') }}">
+                    @csrf
+                    <input type="hidden" name="date" value="{{ $date }}">
+                    <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                    <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
 
-                <div class="form-group">
-                    <label for="break_start">休憩開始時間:</label>
-                    <input type="time" id="break_start" name="break_start">
-                </div>
+                    <div class="form-group">
+                        <label for="break_start">休憩開始時間:</label>
+                        <input type="time" id="break_start" name="break_start">
+                    </div>
 
-                <div class="form-group">
-                    <label for="break_end">休憩終了時間:</label>
-                    <input type="time" id="break_end" name="break_end">
-                </div>
+                    <div class="form-group">
+                        <label for="break_end">休憩終了時間:</label>
+                        <input type="time" id="break_end" name="break_end">
+                    </div>
 
-                <button type="submit" class="save-btn">追加する</button>
-            </form>
+                    <button type="submit" class="save-btn">追加する</button>
+                </form>
+            </div>
        
         </div>
         @elseif ($disable)

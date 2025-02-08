@@ -79,35 +79,6 @@
             background-color: #c82333;
         }
 
-        .error-icon {
-            color: #dc3545;
-            font-weight: bold;
-            margin-left: 5px;
-            font-size: 1.2em;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .error-icon::after {
-            content: "打刻が不正です";
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: 120%; /* ビックリマークの上に表示 */
-            background-color: #333;
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            white-space: nowrap;
-            display: none; /* デフォルトは非表示 */
-            color: red;
-        }
-
-        .error-icon:hover::after {
-            display: block; /* ホバー時に表示 */
-        }
-
         .month-navigation {
             display: flex;
             justify-content: center;
@@ -117,27 +88,76 @@
             color: #333;
         }
 
-    .month-navigation .nav-button {
-        padding: 10px 15px;
-        margin: 0 10px;
-        background-color: #007bff;
-        color: #fff;
-        text-decoration: none;
-        border-radius: 5px;
-        font-weight: bold;
-        transition: background-color 0.3s ease;
-    }
+        .month-navigation .nav-button {
+            padding: 10px 15px;
+            margin: 0 10px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
 
-    .month-navigation .nav-button:hover {
-        background-color: #0056b3;
-    }
+        .month-navigation .nav-button:hover {
+            background-color: #0056b3;
+        }
 
-    .month-navigation .current-month {
-        font-size: 1.5em;
-        font-weight: bold;
-        color: #007bff;
-    }
+        .month-navigation .current-month {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        /* エラー行の通常状態 */
+        .error-row {
+            background-color: #ff69b4; /* ピンク背景 */
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
 
+        /* ホバー時に背景色を強調 */
+        .error-row:hover {
+            background-color: #ff3366; /* より濃いピンク */
+            box-shadow: 0px 0px 15px rgba(255, 51, 102, 0.75);
+        }
+
+        /* ツールチップのデザイン */
+        .error-tooltip {
+            position: absolute;
+            visibility: hidden;
+            width: 220px;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            bottom: 110%; /* 上に表示 */
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            font-size: 0.9em;
+            z-index: 10;
+        }
+
+        /* 行にカーソルを合わせた際にツールチップを表示 */
+        .error-row:hover .error-tooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        /* エラーアイコンの点滅 */
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .error-icon {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: red;
+            animation: blink 1s infinite;
+            cursor: help;
+        }
     </style>
 </head>
 <body>
@@ -205,10 +225,14 @@
                             $breakHours = floor($breakMinutes / 60) + ($breakMinutes % 60) / 100; // 時間に変換
                         }
                     @endphp
-                <tr>
+                    <tr @if ($recordsForDate && $recordsForDate['error'])
+                            class="error-row"
+                        @endif>
                     <td>
                         @if ($recordsForDate && $recordsForDate['error'])
-                            <span class="error-icon">&#33;</span>
+                            <span class="error-tooltip">
+                                {{ $recordsForDate['error_message'] ?? '打刻が不正です' }}
+                            </span>
                         @endif
                         <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $date }}</a>
                     </td>

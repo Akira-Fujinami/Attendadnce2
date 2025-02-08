@@ -515,12 +515,14 @@ class AttendanceController extends Controller
             $totalDailyWorkHours = $summary->total_work_hours ?? 0;
             $totalDailyBreakHours = $summary->total_break_hours ?? 0;
             $totalSalary += $totalDailySalary;
+            $error = AditController::error(Auth::User()->id, $employee->employee_id, $selectedDate->toDateString());
 
             $attendanceData[] = [
                 'employee' => $employee,
                 'totalDailySalary' => $totalDailySalary,
                 'totalDailyWorkHours' => $totalDailyWorkHours,
                 'totalDailyBreakHours' => $totalDailyBreakHours,
+                'error' => $error
             ];
         }
 
