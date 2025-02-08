@@ -205,7 +205,7 @@ class AditController extends Controller
         $records = Adit::where('company_id', $companyId)
             ->where('employee_id', $employeeId)
             ->whereDate('date', $date)
-            ->where('status', '!=', 'rejected')
+            ->where('status', '=', 'approved')
             ->orderBy('minutes') // 時刻順にソート
             ->get(['adit_item', 'minutes']); // 必要なカラムのみ取得
     
@@ -218,17 +218,30 @@ class AditController extends Controller
         $workStart = null;
         $workEnd = null;
         $breaks = [];
+        $lastEvent = null; // 直前のイベント
     
         foreach ($records as $record) {
             $time = \Carbon\Carbon::parse($record->minutes);
     
             if ($record->adit_item === 'work_start') {
+                if ($workStart) return 1; // 出勤が複数回あるのはエラー
+                if ($lastEvent !== null) return 1; // 出勤が最初でないのはエラー
                 $workStart = $time;
+                $lastEvent = 'work_start';
             } elseif ($record->adit_item === 'work_end') {
+                if (!$workStart) return 1; // 出勤前に退勤があるのはエラー
+                if ($workEnd) return 1; // 退勤が複数回あるのはエラー
+                if ($lastEvent !== 'break_end' && $lastEvent !== 'work_start') return 1; // 直前が休憩終了か出勤でないならエラー
                 $workEnd = $time;
+                $lastEvent = 'work_end';
             } elseif ($record->adit_item === 'break_start') {
+                if (!$workStart) return 1; // 出勤前に休憩開始はエラー
+                if ($lastEvent === 'break_start') return 1; // 休憩開始が2回連続はエラー
                 $breaks[] = ['start' => $time, 'end' => null]; // 休憩開始
+                $lastEvent = 'break_start';
             } elseif ($record->adit_item === 'break_end') {
+                if (!$workStart) return 1; // 出勤前に休憩終了はエラー
+                if ($lastEvent !== 'break_start') return 1; // 直前が休憩開始でないならエラー
                 // 直前の未終了の休憩を探して終了時間をセット
                 foreach ($breaks as &$break) {
                     if ($break['end'] === null) {
@@ -236,48 +249,17 @@ class AditController extends Controller
                         break;
                     }
                 }
+                $lastEvent = 'break_end';
             }
         }
     
-        // **エラーチェック**
-        // 1. 出勤より前に休憩開始がある
-        foreach ($breaks as $break) {
-            if ($workStart && $break['start'] < $workStart) {
-                return 1;
-            }
-        }
-
-        if (!$workStart || !$workEnd) {
-            return 1; // 退勤が登録されていない
-        }
-    
-        // 2. 休憩終了が休憩開始より前になっている
-        foreach ($breaks as $break) {
-            if ($break['end'] && $break['end'] < $break['start']) {
-                return 1;
-            }
-        }
-    
-        // 3. 休憩終了がない場合（未ペアの break_start がある）
-        foreach ($breaks as $break) {
-            if ($break['end'] === null) {
-                return 1;
-            }
-        }
-    
-        // 4. 退勤が出勤より前
-        if ($workStart && $workEnd && $workEnd < $workStart) {
+        // 最後の打刻が退勤でないとエラー
+        if ($lastEvent !== 'work_end') {
             return 1;
         }
     
-        // 5. 休憩終了より退勤が前
-        foreach ($breaks as $break) {
-            if ($break['end'] && $workEnd && $workEnd < $break['end']) {
-                return 1;
-            }
-        }
-    
         return null; // エラーなし
-    }    
+    }
+    
 
 }

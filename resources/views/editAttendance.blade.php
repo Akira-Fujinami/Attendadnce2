@@ -106,6 +106,34 @@
         .error-icon:hover::after {
             display: block;
         }
+
+        .error-icon-deleted {
+            color: #dc3545;
+            font-weight: bold;
+            margin-left: 5px;
+            font-size: 1.2em;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .error-icon-deleted::after {
+            content: "削除待ちの打刻です";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 120%;
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .error-icon-deleted:hover::after {
+            display: block;
+        }
         .add-break-section {
             margin-top: 30px;
             padding: 20px;
@@ -118,6 +146,23 @@
             font-size: 1.2em;
             margin-bottom: 15px;
             color: #333;
+        }
+        .form-inline {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-inline input[type="time"] {
+            padding: 5px;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        .form-inline button {
+            padding: 8px 12px;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -167,6 +212,7 @@
                 'status' => $latest->status, // 最新の status
                 'before_minutes' => $before ? $before->minutes : null, // 過去の before_minutes（実際に before_adit_id に紐づくデータ）
                 'before_status' => $before ? $before->status : null, // 過去の status
+                'deleted' => $latest->deleted,
             ];
         })
         ->sortBy(fn($item) => \Carbon\Carbon::parse($item->minutes ?? $item->before_minutes))
@@ -179,7 +225,9 @@
         @if (in_array($aditItem, ['work_start']))
             <tr>
                 <td>
-                    @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
+                    @if (!empty($record['currentRecord']) && $record['currentRecord'][0]['status'] == 'pending' and $record['currentRecord'][0]['deleted'] == 1)
+                        <span class="error-icon-deleted">&#33;</span>
+                    @elseif (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
                         <span class="error-icon">&#33;</span>
                     @endif
                     {{ $labels[$aditItem] }}
@@ -192,16 +240,35 @@
                     @endif
                 </td>
                 <td>
-                    <form method="POST" action="{{ route('updateAttendance') }}">
-                        @csrf
-                        <input type="hidden" name="date" value="{{ $date }}">
-                        <input type="hidden" name="employeeId" value="{{ $employeeId }}">
-                        <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
-                        <input type="hidden" name="adit_item" value="{{ $aditItem }}">
-                        <input type="time" name="{{ $aditItem }}"
-                            value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
-                        <button type="submit" class="save-btn">保存</button>
-                    </form>
+                    <div class="form-inline">
+                        <form method="POST" action="{{ route('updateAttendance') }}">
+                            @csrf
+                            <input type="hidden" name="minutes" value="{{ !empty($record['currentRecord']) ? $record['currentRecord'][0]->minutes : ''}}">
+                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                            <input type="hidden" name="date" value="{{ $date }}">
+                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                            <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                            <input type="hidden" name="adit_id" value="{{ isset($record['previousRecord'][0]) ? $record['previousRecord'][0]->id : '' }}">
+
+                            <input type="time" name="{{ $aditItem }}"
+                                value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
+                            <button type="submit" class="save-btn">保存</button>
+                        </form>
+                        @if (!empty($record['previousRecord']) && empty($record['currentRecord']))
+                        <form method="POST" action="{{ route('deleteAttendance') }}">
+                            @csrf
+                            <input type="hidden" name="minutes" value="{{ !empty($record['currentRecord']) ? $record['currentRecord'][0]->minutes : ''}}">
+                            <input type="hidden" name="date" value="{{ $date }}">
+                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                            <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                            <input type="hidden" name="adit_id" value="{{ isset($record['previousRecord'][0]) ? $record['previousRecord'][0]->id : '' }}">
+                            <button type="submit" class="delete-btn">削除</button>
+                        </form>
+                        @else
+                        <div style="width: 50px;"></div>
+                        @endif
+                    </div>
                 </td>
             </tr>
         @endif
@@ -212,7 +279,9 @@
         @foreach ($combinedRecords as $breakRecord)
             <tr>
                 <td>
-                    @if ($breakRecord->status == 'pending' or $breakRecord->before_status == 'pending')
+                    @if ($breakRecord->status == 'pending' and $breakRecord->deleted == 1)
+                        <span class="error-icon-deleted">&#33;</span>
+                    @elseif ($breakRecord->status == 'pending' or $breakRecord->before_status == 'pending')
                         <span class="error-icon">&#33;</span>
                     @endif
                     {{ $breakRecord->adit_item === 'break_start' ? '休憩開始' : '休憩終了' }}
@@ -227,17 +296,34 @@
                     @endif
                 </td>
                 <td>
-                    <form method="POST" action="{{ route('updateAttendance') }}">
-                        @csrf
-                        <input type="hidden" name="date" value="{{ $date }}">
-                        <input type="hidden" name="employeeId" value="{{ $employeeId }}">
-                        <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
-                        <input type="hidden" name="adit_item" value="{{ $breakRecord->adit_item }}">
-                        <input type="hidden" name="adit_id" value="{{ $breakRecord->id }}">
-                        <input type="time" name="{{ $breakRecord->adit_item }}"
-                            value="{{ $breakRecord->status == 'pending' ? \Carbon\Carbon::parse($breakRecord->minutes)->format('H:i') : '' }}">
-                        <button type="submit" class="save-btn">保存</button>
-                    </form>
+                    <div class="form-inline">
+                        <form method="POST" action="{{ route('updateAttendance') }}">
+                            @csrf
+                            <input type="hidden" name="minutes" value="{{ $breakRecord->status == 'pending' ? $breakRecord->minutes : ''}}">
+                            <input type="hidden" name="date" value="{{ $date }}">
+                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                            <input type="hidden" name="adit_item" value="{{ $breakRecord->adit_item }}">
+                            <input type="hidden" name="adit_id" value="{{ $breakRecord->id }}">
+                            <input type="time" name="{{ $breakRecord->adit_item }}"
+                                value="{{ $breakRecord->status == 'pending' ? \Carbon\Carbon::parse($breakRecord->minutes)->format('H:i') : '' }}">
+                            <button type="submit" class="save-btn">保存</button>
+                        </form>
+                        @if ($breakRecord->status == 'approved' && $breakRecord->before_status == null)
+                        <form method="POST" action="{{ route('deleteAttendance') }}">
+                            @csrf
+                            <input type="hidden" name="minutes" value="{{ $breakRecord->status == 'pending' ? $breakRecord->minutes : ''}}">
+                            <input type="hidden" name="date" value="{{ $date }}">
+                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                            <input type="hidden" name="adit_item" value="{{ $breakRecord->adit_item }}">
+                            <input type="hidden" name="adit_id" value="{{ $breakRecord->id }}">
+                            <button type="submit" class="delete-btn">削除</button>
+                        </form>
+                        @else
+                            <div style="width: 50px;"></div>
+                        @endif
+                    </div>
                 </td>
             </tr>
         @endforeach
@@ -246,7 +332,9 @@
         @if (in_array($aditItem, ['work_end']))
             <tr>
                 <td>
-                    @if (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
+                    @if (!empty($record['currentRecord']) && $record['currentRecord'][0]['status'] == 'pending' and $record['currentRecord'][0]['deleted'] == 1)
+                        <span class="error-icon-deleted">&#33;</span>
+                    @elseif (!empty($record['currentRecord']) && $record['currentRecord'][0]->status === 'pending')
                         <span class="error-icon">&#33;</span>
                     @endif
                     {{ $labels[$aditItem] }}
@@ -259,16 +347,34 @@
                     @endif
                 </td>
                 <td>
-                    <form method="POST" action="{{ route('updateAttendance') }}">
-                        @csrf
-                        <input type="hidden" name="date" value="{{ $date }}">
-                        <input type="hidden" name="employeeId" value="{{ $employeeId }}">
-                        <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
-                        <input type="hidden" name="adit_item" value="{{ $aditItem }}">
-                        <input type="time" name="{{ $aditItem }}"
-                            value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
-                        <button type="submit" class="save-btn">保存</button>
-                    </form>
+                    <div class="form-inline">
+                        <form method="POST" action="{{ route('updateAttendance') }}">
+                            @csrf
+                            <input type="hidden" name="minutes" value="{{ !empty($record['currentRecord']) ? $record['currentRecord'][0]->minutes : '' }}">
+                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                            <input type="hidden" name="date" value="{{ $date }}">
+                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                            <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                            <input type="hidden" name="adit_id" value="{{ isset($record['previousRecord'][0]) ? $record['previousRecord'][0]->id : '' }}">
+                            <input type="time" name="{{ $aditItem }}"
+                                value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
+                            <button type="submit" class="save-btn">保存</button>
+                        </form>
+                        @if (!empty($record['previousRecord']) && empty($record['currentRecord']))
+                        <form method="POST" action="{{ route('deleteAttendance') }}">
+                            @csrf
+                            <input type="hidden" name="date" value="{{ $date }}">
+                            <input type="hidden" name="minutes" value="{{ !empty($record['currentRecord']) ? $record['currentRecord'][0]->minutes : '' }}">
+                            <input type="hidden" name="employeeId" value="{{ $employeeId }}">
+                            <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                            <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                            <input type="hidden" name="adit_id" value="{{ isset($record['previousRecord'][0]) ? $record['previousRecord'][0]->id : '' }}">
+                            <button type="submit" class="delete-btn">削除</button>
+                        </form>
+                        @else
+                            <div style="width: 50px;"></div>
+                        @endif
+                    </div>
                 </td>
             </tr>
         @endif

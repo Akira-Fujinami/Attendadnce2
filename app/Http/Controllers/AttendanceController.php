@@ -289,7 +289,7 @@ class AttendanceController extends Controller
         foreach ($aditItems as $item) {
             $filteredRecords = $records->where('adit_item', $item)->values();
             $data[$item] = [
-                'previousRecord' => $filteredRecords->where('status', 'approved')->values()->all(), // 最新の承認済み
+                'previousRecord' => $filteredRecords->where('status', 'approved')->where('deleted', 0)->values()->all(), // 最新の承認済み
                 'currentRecord' => $filteredRecords->where('status', 'pending')->values()->all(), // 最新のレコード
             ];            
         }
@@ -325,19 +325,17 @@ class AttendanceController extends Controller
         // 対象のレコードを取得
         $attendanceRecord = Adit::where('employee_id', $request->employeeId)
             ->where('company_id', $request->companyId)
-            ->whereDate('date', $request->date)
+            ->where('minutes', $request->minutes)
             ->where('adit_item', $request->adit_item)
             ->where('status', 'pending')
-            ->where('id', $request->adit_id)
+            ->where('deleted', 0)
             ->first();
-
-            // dd($attendanceRecord);
     
         if ($attendanceRecord) {
             if (empty($aditItems)) {
                 // 入力データが空の場合、削除フラグを設定
-                // dd($attendanceRecord);
                 $attendanceRecord->update([
+                    'status' => 'approved',
                     'deleted' => 1,
                 ]);
             } else {
@@ -366,6 +364,25 @@ class AttendanceController extends Controller
             }
         }
     
+        return back();
+    }
+
+    public function deleteAttendance(Request $request) {
+        $attendanceRecord = Adit::where('employee_id', $request->employeeId)
+        ->where('company_id', $request->companyId)
+        ->whereDate('date', $request->date)
+        ->where('adit_item', $request->adit_item)
+        ->where('status', 'approved')
+        ->where('deleted', 0)
+        ->where('id', $request->adit_id)
+        ->first();
+        
+        if ($attendanceRecord['status'] == 'approved') {
+            $attendanceRecord->update([
+                'status' => 'pending',
+                'deleted' => 1,
+            ]);
+        }
         return back();
     }
 
