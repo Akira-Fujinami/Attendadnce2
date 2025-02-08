@@ -54,6 +54,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/attendance/daily/{date}', [AttendanceController::class, 'showDailyAttendance'])->name('attendance.daily');
     Route::get('/eventAttendance', [EventController::class, 'show'])->name('events.show');
     Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
+    Route::get('/events/show', [EventController::class, 'index'])->name('events.index');
+    Route::post('/events/delete/{event}', [EventController::class, 'delete'])->name('events.delete');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
 });
 Route::middleware(['auth:employees', 'App\Http\Middleware\SessionTimeout'])->group(function () {

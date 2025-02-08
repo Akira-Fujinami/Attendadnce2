@@ -19,10 +19,13 @@ class AditController extends Controller
         $aditExists = Adit::whereDate('date', $today)
             ->where('employee_id', $user->id)
             ->where('company_id', $user->company_id)
+            ->where('deleted', 0)
             ->exists();
         $latestAdit = Adit::whereDate('date', $today)
             ->where('employee_id', $user->id)
             ->where('company_id', $user->company_id)
+            ->where('status', 'approved')
+            ->where('deleted', 0)
             ->orderBy('minutes', 'desc') // 最新順にソート
             ->first();
         $status = null;

@@ -80,6 +80,7 @@
     <!-- イベント関連のナビゲーションリンク -->
     <div style="text-align: center; margin-bottom: 20px;">
         <a href="{{ route('events.create') }}" class="btn">イベントを作成</a>
+        <a href="{{ route('events.index') }}" class="btn">イベント一覧</a>
     </div>
 
         <!-- イベント選択 -->

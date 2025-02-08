@@ -97,4 +97,13 @@ class EventController extends Controller
         // 保存後、リダイレクトと成功メッセージを表示
         return redirect()->route('events.show')->with('success', 'イベントが保存されました！');
     }
+    public function index() {
+        $events = Event::where('company_id', Auth::User()->id)->get();
+        return view('eventList', compact('events'));
+    }
+    public function delete($id) {
+        $event = Event::findOrFail($id);
+        $event->delete();
+        return back();
+    }
 }

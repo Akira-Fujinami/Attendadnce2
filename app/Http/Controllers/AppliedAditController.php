@@ -61,15 +61,14 @@ class AppliedAditController extends Controller
 
     public function approveAdit(Request $request)
     {
-        $pendingAdits = Adit::where('company_id', $request->company_id)
+        $pendingAdit = Adit::where('company_id', $request->company_id)
             ->where('employee_id', $request->employee_id)
             ->where('minutes', $request->minutes)
             ->where('adit_item', $request->adit_item)
             ->where('status', 'pending')
-            ->get();
-            // dd($pendingAdits);
+            ->first();
 
-        $approvedAdits = Adit::where('company_id', $request->company_id)
+        $approvedAdit = Adit::where('company_id', $request->company_id)
             ->where('employee_id', $request->employee_id)
             ->where('date', $request->date)
             ->where('adit_item', $request->adit_item)
@@ -78,13 +77,33 @@ class AppliedAditController extends Controller
             ->when($request->adit_id, function ($query, $adit_id) {
                 return $query->where('id', $adit_id);
             })
+            ->first();
+        $rejectAdit = Adit::where('company_id', $request->company_id)
+            ->where('employee_id', $request->employee_id)
+            ->where('minutes', $request->minutes)
+            ->where('adit_item', $request->adit_item)
+            ->where('status', 'rejected')
+            ->first();
+        $multiAdits = Adit::where('company_id', $request->company_id)
+            ->where('employee_id', $request->employee_id)
+            ->where('date', $request->date)
+            ->where('adit_item', $request->adit_item)
+            ->whereIn('status', ['approved', 'pending'])
             ->get();
-            // dd($approvedAdits);
+        // TODO dateでフィルターしている為、休憩打刻が複数回されてる場合は不具合の可能性あり
+        if ($rejectAdit) {
+            $rejectAdit->update(['status' => 'approved']);
+            foreach ($multiAdits as $multiAdit) {
+                if ($multiAdit['adit_item'] == 'work_start' || $multiAdit['adit_item'] == 'work_end') {
+                    $multiAdit->update(['status' => 'rejected']);
+                }
+            }
+        }
         // 承認処理
-        foreach ($pendingAdits as $pendingAdit) {
+        if ($pendingAdit) {
             $pendingAdit->update(['status' => 'approved']);
         }
-        foreach ($approvedAdits as $approvedAdit) {
+        if ($approvedAdit) {
             $approvedAdit->update(['status' => 'rejected']);
         }
 
@@ -131,7 +150,7 @@ class AppliedAditController extends Controller
                 ]);
         }
 
-        return back();
+        return redirect()->route('appliedAdit', ['companyId' => Auth::user()->id]);
     }
 
     public function rejectAdit(Request $request)

@@ -247,6 +247,38 @@
             animation: fadeIn 0.3s ease-in-out;
         }
 
+        .nav-button {
+            font-size: 1em;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background-color: #0056b3;
+        }
+        .header-container {
+            display: flex;
+            align-items: center; /* 高さを中央揃え */
+            justify-content: flex-start; /* 左寄せ */
+            gap: 20px; /* ボタンと見出しの間隔を調整 */
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-left: 20%; /* 30px だけ右に移動（適宜調整） */
+        }
+        h3 {
+            margin-left: auto;
+            font-size: 1.2em;
+            color: #333;
+        }
+
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -261,7 +293,14 @@
 </head>
 <body>
     <div class="container">
-    <h2 style="text-align: center; margin-bottom: 20px;">{{ $year }}年 {{ $month }}月 {{ $day }}日</h2> 
+        <div class="header-container">
+            <button onclick="location.href='{{ route('attendance', ['company_id' => Auth::user()->company_id, 'employee_id' => Auth::user()->id]) }}'" class="nav-button">
+                出勤簿へ遷移
+            </button>
+            <h2>{{ $year }}年 {{ $month }}月 {{ $day }}日</h2>
+            <h3>{{$name}}さん<h3>
+        </div>
+
         <h1>打刻修正画面</h1>
         @if(!$disable)
         <table>
@@ -495,7 +534,7 @@
 
         </table>
         <div class="add-break-section">
-            <h2>休憩打刻を追加</h2>
+            <h3>休憩打刻を追加</h2>
             <div class="break-form">
                 <form method="POST" action="{{ route('updateAttendance') }}">
                     @csrf
@@ -523,11 +562,6 @@
             <strong>この日付の打刻データは未来日の為、修正できません。</strong>
         </div>
         @endif
-
-
-        <div class="navigation">
-        <a href="{{ route('attendance', ['company_id' => Auth::user()->company_id, 'employee_id' => Auth::user()->id]) }}" class="button">出勤簿へ遷移</a>
-    </div>
     </div>
 </body>
 </html>

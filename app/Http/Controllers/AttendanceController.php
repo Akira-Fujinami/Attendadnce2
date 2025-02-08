@@ -293,12 +293,13 @@ class AttendanceController extends Controller
                 'currentRecord' => $filteredRecords->where('status', 'pending')->values()->all(), // 最新のレコード
             ];            
         }
-        // dd($data);
+        $name = Employee::where('id', Auth::User()->id)->where('company_id', Auth::User()->company_id)->first()->name;
 
         // Bladeに渡すデータ
         return view('editAttendance', [
             'disable' => 0,
             'date' => $date,
+            'name' => $name,
             'employeeId' => $employeeId,
             'records' => $data,
             'year' => $year,
