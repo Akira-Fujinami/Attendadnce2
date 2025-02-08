@@ -121,7 +121,6 @@ class StaffController extends Controller
                 'password' => 'nullable|string|min:3',
                 'transportation' => 'required|numeric',
                 'wage' => 'required|numeric',
-                'retired' => 'required|string|in:在職中,退職済み',
             ],
             [
                 'name.required' => '名前を入力してください。',

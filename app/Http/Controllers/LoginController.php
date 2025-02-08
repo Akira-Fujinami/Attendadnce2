@@ -17,8 +17,10 @@ class LoginController extends Controller
         $user = User::where('email', $request->email)->first();
         session()->flush();
         if ($user && Hash::check($request->password, $user->password)) {
+            session(['last_login_email' => $request->email]);
             Auth::login($user);
             return redirect()->route('staff')
+            ->withCookie(cookie('email', $request->email, 60 * 24 * 30))
             ->with('success', 'ログインに成功しました');
         }
         $employees = Employee::join('users', 'users.id', '=', 'employees.company_id')
@@ -35,8 +37,10 @@ class LoginController extends Controller
         if ($matchedEmployee) {
             // 該当する従業員が見つかった場合ログイン処理
             session(['lastActivityTime' => now()->timestamp]); // 最終アクティビティを記録
+            session(['last_login_email' => $request->email]);
             Auth::guard('employees')->login($matchedEmployee);
             return redirect()->route('adit')
+                ->withCookie(cookie('email', $request->email, 60 * 24 * 30))
                 ->with('success', '従業員としてログインしました');
         }
 

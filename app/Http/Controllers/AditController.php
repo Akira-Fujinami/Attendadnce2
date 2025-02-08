@@ -118,6 +118,14 @@ class AditController extends Controller
                 'salary' => $salary, // 給与計算ロジック
             ]);
         }
+        if (self::error($request->company_id, $request->employee_id, $today)) {
+            $dailySummary->update([
+                'total_work_hours' => 0,
+                'total_break_hours' => 0,
+                'overtime_hours' => 0, // 8時間以上の場合は残業
+                'salary' => 0, // 給与計算ロジック
+                ]);
+        }
         return redirect()->route('adit');
     }
 
