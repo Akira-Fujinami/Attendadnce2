@@ -107,48 +107,7 @@ class AppliedAditController extends Controller
             $approvedAdit->update(['status' => 'rejected']);
         }
 
-        $date = date('Y-m-d', strtotime($request->date));
-        $dailySummary = DailySummary::firstOrCreate(
-            [
-                'company_id' => $request->company_id,
-                'employee_id' => $request->employee_id,
-                'date' => $date,
-            ],
-            [
-                'company_id' => $request->company_id,
-                'employee_id' => $request->employee_id,
-                'date' => $date,
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0,
-                'salary' => 0,
-            ]
-        );
-        $aditExists = Adit::whereDate('date', $date)
-        ->where('company_id', $request->company_id)
-        ->where('employee_id', $request->employee_id)
-        ->exists();
-        if ($aditExists && !AditController::error($request->company_id, $request->employee_id, $date)) {
-            $totalBreakHours = AditController::calculateBreakHours($request->company_id, $request->employee_id, $date);
-            $totalWorkHours = AditController::calculateWorkHours($request->company_id, $request->employee_id, $date, $totalBreakHours);
-            // 給与を計算
-            $salary = AditController::calculateSalary($request->wage, $request->transportation, $totalWorkHours, $totalBreakHours);
-
-            $dailySummary->update([
-            'total_work_hours' => $totalWorkHours,
-            'total_break_hours' => $totalBreakHours,
-            'overtime_hours' => max($totalWorkHours - 8, 0), // 8時間以上の場合は残業
-            'salary' => $salary, // 給与計算ロジック
-            ]);
-        }
-        if (AditController::error($request->company_id, $request->employee_id, $date)) {
-            $dailySummary->update([
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0, // 8時間以上の場合は残業
-                'salary' => 0, // 給与計算ロジック
-                ]);
-        }
+        DailySummaryController::summary($request->company_id, $request->employee_id, $request->date);
 
         return redirect()->route('appliedAdit', ['companyId' => Auth::user()->id]);
     }
@@ -166,51 +125,9 @@ class AppliedAditController extends Controller
                 'status' => 'approved',
                 'deleted' => 0,
             ]);
-            $date = date('Y-m-d', strtotime($request->date));
-            $dailySummary = DailySummary::firstOrCreate(
-                [
-                    'company_id' => $request->company_id,
-                    'employee_id' => $request->employee_id,
-                    'date' => $date,
-                ],
-                [
-                    'company_id' => $request->company_id,
-                    'employee_id' => $request->employee_id,
-                    'date' => $date,
-                    'total_work_hours' => 0,
-                    'total_break_hours' => 0,
-                    'overtime_hours' => 0,
-                    'salary' => 0,
-                ]
-            );
-            $aditExists = Adit::whereDate('date', $date)
-            ->where('company_id', $request->company_id)
-            ->where('employee_id', $request->employee_id)
-            ->exists();
-            if ($aditExists && !AditController::error($request->company_id, $request->employee_id, $date)) {
-                $totalBreakHours = AditController::calculateBreakHours($request->company_id, $request->employee_id, $date);
-                $totalWorkHours = AditController::calculateWorkHours($request->company_id, $request->employee_id, $date, $totalBreakHours);
-                // 給与を計算
-                $salary = AditController::calculateSalary($request->wage, $request->transportation, $totalWorkHours, $totalBreakHours);
-    
-                $dailySummary->update([
-                'total_work_hours' => $totalWorkHours,
-                'total_break_hours' => $totalBreakHours,
-                'overtime_hours' => max($totalWorkHours - 8, 0), // 8時間以上の場合は残業
-                'salary' => $salary, // 給与計算ロジック
-                ]);
-            }
-            if (AditController::error($request->company_id, $request->employee_id, $date)) {
-                $dailySummary->update([
-                    'total_work_hours' => 0,
-                    'total_break_hours' => 0,
-                    'overtime_hours' => 0, // 8時間以上の場合は残業
-                    'salary' => 0, // 給与計算ロジック
-                    ]);
-            }
+            DailySummaryController::summary($request->company_id, $request->employee_id, $request->date);
             return back();
         }
-        // $adit = Adit::findOrFail($id);
 
         // 却下処理
         $adit->update(['status' => 'rejected']);

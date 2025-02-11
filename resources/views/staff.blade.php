@@ -214,7 +214,18 @@
                 grid-template-columns: repeat(2, 1fr); /* 2列に変更 */
             }
         }
+        .error-link,
+        .error-message a {
+            color: #dc3545 !important; /* 赤色に強制 */
+            text-decoration: none; /* 下線を削除 */
+            font-weight: bold;
+        }
 
+        .error-link:hover,
+        .error-message a:hover {
+            text-decoration: underline; /* ホバー時に下線 */
+            opacity: 0.8;
+        }
 
 
     </style>
@@ -291,18 +302,17 @@
         <ul>
             @foreach ($EmployeeList as $employee)
                 @if (!empty($employee->errors))
-                    <li style="color: #dc3545; font-weight: bold; text-decoration: none;">
-                        {{ $employee->name }}:
+                    <li class="error-message" style="color: #dc3545; font-weight: bold;">
                         @foreach ($employee->errors as $error)
                             <a href="{{ route('attendanceDetails', ['date' => $error['date'], 'employeeId' => $error['employee_id'], 'companyId' => $error['company_id']]) }}">
-                                {{ $error['name'] }}<br>
+                            {{ $employee->name }}: {{ $error['name'] }}<br>
                             </a>
                         @endforeach
                     </li>
                 @endif
                 @if (!empty($employee->pendingRecords))
                     @foreach ($employee->pendingRecords as $pendingRecord)
-                        <li>
+                        <li class="error-message" style="color: #dc3545; font-weight: bold;">
                             <a href="{{ route('appliedAdit', ['companyId' => Auth::User()->id]) }}" class="error-link">
                                 {{ $employee->name }}: 未承認の打刻があります ({{ $pendingRecord['date'] }})
                             </a>

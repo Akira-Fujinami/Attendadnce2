@@ -41,48 +41,7 @@ class AttendanceDetailsController extends Controller
         $adit->adit_item = $request->input('adit_item');
         $adit->status = 'approved';
         $adit->save();
-        $dailySummary = DailySummary::firstOrCreate(
-            [
-                'company_id' => $adit->company_id,
-                'employee_id' => $adit->employee_id,
-                'date' => $adit->date,
-            ],
-            [
-                'company_id' => $adit->company_id,
-                'employee_id' => $adit->employee_id,
-                'date' => $adit->date,
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0,
-                'salary' => 0,
-            ]
-        );
-        $aditExists = Adit::whereDate('date', $adit->date)
-        ->where('company_id', $adit->company_id)
-        ->where('employee_id', $adit->employee_id)
-        ->exists();
-        $employee = Employee::find($adit->employee_id);
-        if ($aditExists && !AditController::error($adit->company_id, $adit->employee_id, $adit->date)) {
-            $totalBreakHours = AditController::calculateBreakHours($adit->company_id, $adit->employee_id, $adit->date);
-            $totalWorkHours = AditController::calculateWorkHours($adit->company_id, $adit->employee_id, $adit->date, $totalBreakHours);
-            // 給与を計算
-            $salary = AditController::calculateSalary($employee->hourly_wage, $employee->transportation_fee, $totalWorkHours, $totalBreakHours);
-
-            $dailySummary->update([
-            'total_work_hours' => $totalWorkHours,
-            'total_break_hours' => $totalBreakHours,
-            'overtime_hours' => max($totalWorkHours - 8, 0), // 8時間以上の場合は残業
-            'salary' => $salary, // 給与計算ロジック
-            ]);
-        }
-        if (AditController::error($adit->company_id, $adit->employee_id, $adit->date)) {
-            $dailySummary->update([
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0, // 8時間以上の場合は残業
-                'salary' => 0, // 給与計算ロジック
-                ]);
-        }
+        DailySummaryController::summary($adit->company_id, $adit->employee_id, $adit->date);
         return redirect()->back()->with('success', '打刻が更新されました');
     }
     public function delete(Request $request, $id) {
@@ -90,48 +49,7 @@ class AttendanceDetailsController extends Controller
         $adit->status = 'approved';
         $adit->deleted = 1;
         $adit->save();
-        $dailySummary = DailySummary::firstOrCreate(
-            [
-                'company_id' => $adit->company_id,
-                'employee_id' => $adit->employee_id,
-                'date' => $adit->date,
-            ],
-            [
-                'company_id' => $adit->company_id,
-                'employee_id' => $adit->employee_id,
-                'date' => $adit->date,
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0,
-                'salary' => 0,
-            ]
-        );
-        $aditExists = Adit::whereDate('date', $adit->date)
-        ->where('company_id', $adit->company_id)
-        ->where('employee_id', $adit->employee_id)
-        ->exists();
-        $employee = Employee::find($adit->employee_id);
-        if ($aditExists && !AditController::error($adit->company_id, $adit->employee_id, $adit->date)) {
-            $totalBreakHours = AditController::calculateBreakHours($adit->company_id, $adit->employee_id, $adit->date);
-            $totalWorkHours = AditController::calculateWorkHours($adit->company_id, $adit->employee_id, $adit->date, $totalBreakHours);
-            // 給与を計算
-            $salary = AditController::calculateSalary($employee->hourly_wage, $employee->transportation_fee, $totalWorkHours, $totalBreakHours);
-
-            $dailySummary->update([
-            'total_work_hours' => $totalWorkHours,
-            'total_break_hours' => $totalBreakHours,
-            'overtime_hours' => max($totalWorkHours - 8, 0), // 8時間以上の場合は残業
-            'salary' => $salary, // 給与計算ロジック
-            ]);
-        }
-        if (AditController::error($adit->company_id, $adit->employee_id, $adit->date)) {
-            $dailySummary->update([
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0, // 8時間以上の場合は残業
-                'salary' => 0, // 給与計算ロジック
-                ]);
-        }
+        DailySummaryController::summary($adit->company_id, $adit->employee_id, $adit->date);
         return redirect()->back()->with('success', '打刻が更新されました');
     }
 
@@ -150,50 +68,7 @@ class AttendanceDetailsController extends Controller
             'adit_item' => $request->input('adit_item'),
             'status' => 'approved',
         ]);
-
-        $dailySummary = DailySummary::firstOrCreate(
-            [
-                'company_id' => $adit->company_id,
-                'employee_id' => $adit->employee_id,
-                'date' => $adit->date,
-            ],
-            [
-                'company_id' => $adit->company_id,
-                'employee_id' => $adit->employee_id,
-                'date' => $adit->date,
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0,
-                'salary' => 0,
-            ]
-        );
-        $aditExists = Adit::whereDate('date', $adit->date)
-        ->where('company_id', $adit->company_id)
-        ->where('employee_id', $adit->employee_id)
-        ->exists();
-        $employee = Employee::find($adit->employee_id);
-        if ($aditExists && !AditController::error($adit->company_id, $adit->employee_id, $adit->date)) {
-            $totalBreakHours = AditController::calculateBreakHours($adit->company_id, $adit->employee_id, $adit->date);
-            $totalWorkHours = AditController::calculateWorkHours($adit->company_id, $adit->employee_id, $adit->date, $totalBreakHours);
-            // 給与を計算
-            $salary = AditController::calculateSalary($employee->hourly_wage, $employee->transportation_fee, $totalWorkHours, $totalBreakHours);
-
-            $dailySummary->update([
-            'total_work_hours' => $totalWorkHours,
-            'total_break_hours' => $totalBreakHours,
-            'overtime_hours' => max($totalWorkHours - 8, 0), // 8時間以上の場合は残業
-            'salary' => $salary, // 給与計算ロジック
-            ]);
-        }
-        if (AditController::error($adit->company_id, $adit->employee_id, $adit->date)) {
-            $dailySummary->update([
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0, // 8時間以上の場合は残業
-                'salary' => 0, // 給与計算ロジック
-                ]);
-        }
-
+        DailySummaryController::summary($adit->company_id, $adit->employee_id, $adit->date);
         return redirect()->back()->with('success', '打刻が追加されました');
     }
 

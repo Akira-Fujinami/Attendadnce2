@@ -121,8 +121,21 @@
             box-shadow: 0px 0px 15px rgba(255, 51, 102, 0.75);
         }
 
+        /* 承認待ち（pending）の行の背景色 */
+        .pending-row {
+            background-color: #fff3cd; /* 黄色 */
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        /* ホバー時に背景色を強調 */
+        .pending-row:hover {
+            background-color: #ffeeba; /* より濃い黄色 */
+            box-shadow: 0px 0px 15px rgba(255, 193, 7, 0.75);
+        }
+
         /* ツールチップのデザイン */
-        .error-tooltip {
+        .error-tooltip, .pending-tooltip{
             position: absolute;
             visibility: hidden;
             width: 220px;
@@ -141,7 +154,8 @@
         }
 
         /* 行にカーソルを合わせた際にツールチップを表示 */
-        .error-row:hover .error-tooltip {
+        .error-row:hover .error-tooltip,
+        .pending-row:hover .pending-tooltip{
             visibility: visible;
             opacity: 1;
             transform: translateX(-50%) translateY(-5px);
@@ -227,11 +241,17 @@
                     @endphp
                     <tr @if ($recordsForDate && $recordsForDate['error'])
                             class="error-row"
+                        @elseif ($recordsForDate && $recordsForDate['has_pending'])
+                            class="pending-row"
                         @endif>
                     <td>
                         @if ($recordsForDate && $recordsForDate['error'])
                             <span class="error-tooltip">
-                                {{ $recordsForDate['error_message'] ?? '打刻が不正です' }}
+                                打刻が不正です
+                            </span>
+                        @elseif ($recordsForDate && $recordsForDate['has_pending'])
+                            <span class="pending-tooltip">
+                                未承認の打刻があります
                             </span>
                         @endif
                         <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $date }}</a>
@@ -239,7 +259,7 @@
                     <td>
                         @if ($recordsForDate)
                             @foreach ($recordsForDate['records'] as $record)
-                                @if ($record['adit_item'] === 'work_start')
+                                @if ($record['adit_item'] === 'work_start' && !is_null($record['minutes']))
                                     {{ \Carbon\Carbon::parse($record['minutes'])->format('H:i') }}
                                 @endif
                             @endforeach
@@ -248,7 +268,7 @@
                     <td>
                         @if ($recordsForDate)
                             @foreach ($recordsForDate['records'] as $record)
-                                @if ($record['adit_item'] === 'work_end')
+                                @if ($record['adit_item'] === 'work_end' && !is_null($record['minutes']))
                                     {{ \Carbon\Carbon::parse($record['minutes'])->format('H:i') }}
                                 @endif
                             @endforeach

@@ -47,7 +47,8 @@ class AttendanceController extends Controller
         $attendanceRecords = Adit::where('employee_id', $employeeId)
                             ->where('company_id', $companyId)
                             ->whereBetween('date', [reset($dates), end($dates)])
-                            ->where('status', 'approved')
+                            ->whereIn('status', ['approved', 'pending'])
+                            ->where('deleted', 0)
                             ->orderBy('created_at', 'desc') // 最新の順に並べる
                             ->get()
                             ->groupBy('date') // 日付ごとにグループ化
@@ -69,16 +70,16 @@ class AttendanceController extends Controller
 
                                 $totalBreakHours = $sum->total_break_hours ?? 0; // デフォルト値を設定
                                 $totalWorkHours = $sum->total_work_hours ?? 0;   // デフォルト値を設定
-                                $mappedRecords = $records->map(function ($record) {
+                                $mappedRecords = $records->map(function ($record) use ($hasPending) {
                                     return [
                                         'id' => $record->id,
                                         'date' => $record->date,
                                         'status' => $record->status,
-                                        'minutes' => $record->minutes,
+                                        'minutes' => ($record->status === 'approved' || !$hasPending) ? $record->minutes : null,
                                         'adit_item' => $record->adit_item,
                                         'employee_id' => $record->employee_id,
                                     ];
-                                });
+                                });                                
 
                                 // 各日付グループに `has_pending` を追加
                                 return [
@@ -222,6 +223,7 @@ class AttendanceController extends Controller
         foreach ($summaries as $summary) {
             $error = null;
             $aditRecords = Adit::where('date', $summary->date)
+            ->where('company_id', Auth::User()->id)
             ->where('employee_id', $employeeId)
             ->get();
         
@@ -277,6 +279,7 @@ class AttendanceController extends Controller
 
         // 該当する従業員とその日付の打刻データを取得
         $records = Adit::where('employee_id', $employeeId)
+            ->where('company_id', Auth::User()->id)
             ->whereDate('date', $date)
             ->whereIn('status', ['approved', 'pending'])
             ->orderBy('created_at', 'asc') // 古い順にソート

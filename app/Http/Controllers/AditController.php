@@ -52,7 +52,15 @@ class AditController extends Controller
             ->get()
             ->groupBy('date');
 
+        $pendingRecords = Adit::whereBetween('date', [$lastMonthStart, $yesterday])
+            ->where('employee_id', $user->id)
+            ->where('company_id', $user->company_id)
+            ->where('status', 'pending')
+            ->get()
+            ->groupBy('date');
+
         $errors = [];
+        $pending = [];
         // エラーに追加
         foreach ($aditRecords as $date => $records) {
             $errorExists = self::error($user->company_id, $user->id, $date);
@@ -60,9 +68,22 @@ class AditController extends Controller
                 $errors[] = [
                     'date' => $date,
                     'error' => self::error($user->company_id, $user->id, $date),
+                    'pending' => $pendingRecordExists,
+                ];
+            }
+            $pendingRecordExists = Adit::whereDate('date', $date)
+            ->where('employee_id', $user->id)
+            ->where('company_id', $user->company_id)
+            ->where('status', 'pending')
+            ->exists();
+            if ($pendingRecordExists) {
+                $pending[] = [
+                    'date' => $date,
+                    'pending' => 1,
                 ];
             }
         }
+        // dd($errors);
 
         // dd($latestAdit);
         $data = [
@@ -71,6 +92,7 @@ class AditController extends Controller
             'latestAdit' => $latestAdit ? $latestAdit->adit_item : null,
             'aditExists' => $aditExists,
             'errors' => $errors,
+            'pending' => $pending,
         ];
 
         return view('adit', compact('data'));
@@ -84,48 +106,7 @@ class AditController extends Controller
             'adit_item' => $request->adit_item,
             'status' => 'approved',
         ]);
-        $dailySummary = DailySummary::firstOrCreate(
-            [
-                'company_id' => $request->company_id,
-                'employee_id' => $request->employee_id,
-                'date' => now()->format('Y-m-d'),
-            ],
-            [
-                'company_id' => $request->company_id,
-                'employee_id' => $request->employee_id,
-                'date' => now()->format('Y-m-d'),
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0,
-                'salary' => 0,
-            ]
-        );
-        $today = now()->format('Y-m-d');
-        $aditExists = Adit::whereDate('date', $today)
-                        ->where('company_id', $request->company_id)
-                        ->where('employee_id', $request->employee_id)
-                        ->exists();
-        if ($aditExists && !self::error($request->company_id, $request->employee_id, $today)) {
-            $totalBreakHours = $this->calculateBreakHours($request->company_id, $request->employee_id, $today);
-            $totalWorkHours = $this->calculateWorkHours($request->company_id, $request->employee_id, $today, $totalBreakHours);
-            // 給与を計算
-            $salary = $this->calculateSalary($request->wage, $request->transportation, $totalWorkHours, $totalBreakHours);
-    
-            $dailySummary->update([
-                'total_work_hours' => $totalWorkHours,
-                'total_break_hours' => $totalBreakHours,
-                'overtime_hours' => max($totalWorkHours - 8, 0), // 8時間以上の場合は残業
-                'salary' => $salary, // 給与計算ロジック
-            ]);
-        }
-        if (self::error($request->company_id, $request->employee_id, $today)) {
-            $dailySummary->update([
-                'total_work_hours' => 0,
-                'total_break_hours' => 0,
-                'overtime_hours' => 0, // 8時間以上の場合は残業
-                'salary' => 0, // 給与計算ロジック
-                ]);
-        }
+        DailySummaryController::summary($request->company_id, $request->employee_id, now()->format('Y-m-d'));
         return redirect()->route('adit');
     }
 
@@ -163,6 +144,7 @@ class AditController extends Controller
     {
         // 休憩開始データを取得
         $breakStarts = Adit::where('employee_id', $employeeId)
+            ->where('company_id', $companyId)
             ->where('adit_item', 'break_start')
             ->whereDate('date', $date)
             ->where('status', 'approved')
@@ -172,6 +154,7 @@ class AditController extends Controller
     
         // 休憩終了データを取得
         $breakEnds = Adit::where('employee_id', $employeeId)
+            ->where('company_id', $companyId)
             ->where('adit_item', 'break_end')
             ->whereDate('date', $date)
             ->where('status', 'approved')

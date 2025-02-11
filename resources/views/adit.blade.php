@@ -174,6 +174,16 @@
             </li>
         @endforeach
     @endif
+    @if (!empty($data['pending']))
+        @foreach($data['pending'] as $pending)
+            <li>
+                <a href="{{ route('editAttendance', ['date' => $error['date'], 'employeeId' => Auth::User()->id]) }}" class="error-link">
+                    {{ $pending['date'] }}: 
+                    <span class="error-message">未承認の打刻があります</span>
+                </a>
+            </li>
+        @endforeach
+    @endif
 
 
 </div>
