@@ -279,7 +279,7 @@ class AttendanceController extends Controller
 
         // 該当する従業員とその日付の打刻データを取得
         $records = Adit::where('employee_id', $employeeId)
-            ->where('company_id', Auth::User()->id)
+            ->where('company_id', Auth::User()->company_id)
             ->whereDate('date', $date)
             ->whereIn('status', ['approved', 'pending'])
             ->orderBy('created_at', 'asc') // 古い順にソート

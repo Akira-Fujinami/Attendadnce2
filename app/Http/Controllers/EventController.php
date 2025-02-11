@@ -27,6 +27,7 @@ class EventController extends Controller
             $event = Event::where('company_id', Auth::User()->id)
                             ->where('id', $eventId)->first();
             $employees = Employee::where('company_id', Auth::User()->id)->get();
+            $filteredEmployees = [];
             $totalSalary = 0;
             foreach ($employees as $employee) {
                 $summary = DailySummary::where('company_id', Auth::User()->id)
@@ -34,13 +35,23 @@ class EventController extends Controller
                 ->whereBetween('date', [$event->fromDate, $event->toDate])
                 ->selectRaw('SUM(total_work_hours) as totalWorkHours, COUNT(date) as attendanceDays, SUM(salary) as totalSalary')
                 ->first();
-                $employee->attendanceDays = $summary->attendanceDays ?? 0;
-                $employee->totalWorkHours = $summary->totalWorkHours ?? 0;
-                $employee->totalSalary = $summary->totalSalary ?? 0;
-                $totalSalary += $employee->totalSalary;
+                $attendanceDays = $summary->attendanceDays ?? 0;
+                $totalWorkHours = $summary->totalWorkHours ?? 0;
+                $totalSalaryForEmployee = $summary->totalSalary ?? 0;
+    
+                // いずれかの値が 0 より大きい場合のみ表示対象にする
+                if ($attendanceDays > 0 || $totalWorkHours > 0 || $totalSalaryForEmployee > 0) {
+                    $employee->attendanceDays = $attendanceDays;
+                    $employee->totalWorkHours = $totalWorkHours;
+                    $employee->totalSalary = $totalSalaryForEmployee;
+                    $filteredEmployees[] = $employee;
+    
+                    // 総給与を加算
+                    $totalSalary += $totalSalaryForEmployee;
+                }
             }
             return view('eventAttendance', [
-                'employees' => $employees,
+                'employees' => $filteredEmployees,
                 'event' => $event,
                 'allEvents' => $allEvents,
                 'totalSalary' => $totalSalary,
