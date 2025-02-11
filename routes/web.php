@@ -8,6 +8,7 @@ use App\Http\Controllers\AditController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AppliedAditController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\AttendanceDetailsController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -45,7 +46,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/staff/update/{id}', [StaffController::class, 'update'])->name('staffUpdate');
     Route::get('/attendanceList', [AttendanceController::class, 'attendanceList'])->name('attendanceList');
     Route::get('/attendanceDetail/{employeeId?}/{year?}/{month?}/{eventId?}', [AttendanceController::class, 'attendanceDetail'])->name('attendanceDetail');
-    Route::get('/attendance/{date}/{employeeId}/{companyId}', [AttendanceController::class, 'showDetails'])->name('attendanceDetails');
+    Route::get('/attendance/{date}/{employeeId}/{companyId}', [AttendanceDetailsController::class, 'showDetails'])->name('attendanceDetails');
     Route::get('/appliedAdit/{companyId}', [AppliedAditController::class, 'index'])->name('appliedAdit');
     Route::post('/adit/approve', [AppliedAditController::class, 'approveAdit'])->name('adit.approve');
     Route::post('/adit/reject', [AppliedAditController::class, 'rejectAdit'])->name('adit.reject');
@@ -57,6 +58,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/events/show', [EventController::class, 'index'])->name('events.index');
     Route::post('/events/delete/{event}', [EventController::class, 'delete'])->name('events.delete');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
+    Route::post('/attendance/update/{id}', [AttendanceDetailsController::class, 'update'])->name('attendance.update');
+    Route::post('/attendance/delete/{id}', [AttendanceDetailsController::class, 'delete'])->name('attendance.delete');
+    Route::post('/attendance/store', [AttendanceDetailsController::class, 'store'])->name('attendance.store');
 });
 Route::middleware(['auth:employees', 'App\Http\Middleware\SessionTimeout'])->group(function () {
     Route::get('/adit', [AditController::class, 'index'])->name('adit');

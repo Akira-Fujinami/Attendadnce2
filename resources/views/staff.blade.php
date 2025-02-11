@@ -293,9 +293,10 @@
                 @if (!empty($employee->errors))
                     <li style="color: #dc3545; font-weight: bold; text-decoration: none;">
                         {{ $employee->name }}:
-                        <br>
                         @foreach ($employee->errors as $error)
-                            ・{{ $error }}<br>
+                            <a href="{{ route('attendanceDetails', ['date' => $error['date'], 'employeeId' => $error['employee_id'], 'companyId' => $error['company_id']]) }}">
+                                {{ $error['name'] }}<br>
+                            </a>
                         @endforeach
                     </li>
                 @endif
@@ -303,7 +304,7 @@
                     @foreach ($employee->pendingRecords as $pendingRecord)
                         <li>
                             <a href="{{ route('appliedAdit', ['companyId' => Auth::User()->id]) }}" class="error-link">
-                                {{ $employee->name }}: {{ $pendingRecord['date'] }} - 未承認の打刻があります
+                                {{ $employee->name }}: 未承認の打刻があります ({{ $pendingRecord['date'] }})
                             </a>
                         </li>
                     @endforeach

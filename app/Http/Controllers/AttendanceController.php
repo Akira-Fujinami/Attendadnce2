@@ -452,26 +452,6 @@ class AttendanceController extends Controller
         };
         return response()->stream($callback, 200, $headers);
     }
-    public function showDetails($date, $employeeId, $companyId)
-    {
-        // 指定日の打刻データを取得
-        $aditRecords = Adit::where('employee_id', $employeeId)
-            ->where('company_id', $companyId)
-            ->where('date', $date)
-            ->orderBy('minutes', 'asc')
-            ->get();
-        $employee = Employee::find($employeeId);
-
-        if (!$employee || $aditRecords->isEmpty()) {
-            return redirect()->back()->with('error', '該当するデータが見つかりません。');
-        }
-
-        return view('attendanceDetails', [
-            'date' => $date,
-            'employee' => $employee,
-            'aditRecords' => $aditRecords,
-        ]);
-    }
 
     public function showCalendar(Request $request)
     {

@@ -51,9 +51,6 @@ class AditController extends Controller
             ->where('status', '!=', 'rejected')
             ->get()
             ->groupBy('date');
-        
-        // 退勤打刻がない日付をチェック
-        $missingWorkEndDates = collect();
 
         $errors = [];
         // エラーに追加
@@ -212,11 +209,15 @@ class AditController extends Controller
     }
 
     public static function error($companyId, $employeeId, $date) {
+        if (Carbon::parse($date)->gte(Carbon::today())) {
+            return null;
+        }
         // 指定された日付の打刻データを取得
         $records = Adit::where('company_id', $companyId)
             ->where('employee_id', $employeeId)
             ->whereDate('date', $date)
             ->where('status', '=', 'approved')
+            ->where('deleted', 0)
             ->orderBy('minutes') // 時刻順にソート
             ->get(['adit_item', 'minutes']); // 必要なカラムのみ取得
     
