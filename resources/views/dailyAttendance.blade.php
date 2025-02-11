@@ -42,66 +42,94 @@
             font-size: 1.2em;
         }
                 /* エラー行の通常状態 */
-    .error-row {
-        background-color: #ff69b4; /* ピンク背景 */
-        position: relative;
-        transition: background-color 0.3s ease;
-    }
+        .error-row {
+            background-color: #ff69b4; /* ピンク背景 */
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
 
-    /* ホバー時に背景色を強調 */
-    .error-row:hover {
-        background-color: #ff3366; /* より濃いピンク */
-        box-shadow: 0px 0px 15px rgba(255, 51, 102, 0.75);
-    }
+        /* ホバー時に背景色を強調 */
+        .error-row:hover {
+            background-color: #ff3366; /* より濃いピンク */
+            box-shadow: 0px 0px 15px rgba(255, 51, 102, 0.75);
+        }
 
-    /* ツールチップのデザイン */
-    .error-tooltip {
-        position: absolute;
-        visibility: hidden;
-        width: 220px;
-        background-color: rgba(0, 0, 0, 0.85);
-        color: #fff;
-        text-align: center;
-        padding: 10px;
-        border-radius: 5px;
-        bottom: 110%; /* 上に表示 */
-        left: 50%;
-        transform: translateX(-50%);
-        opacity: 0;
-        transition: opacity 0.3s ease, transform 0.3s ease;
-        font-size: 0.9em;
-        z-index: 10;
-    }
+        /* ツールチップのデザイン */
+        .error-tooltip {
+            position: absolute;
+            visibility: hidden;
+            width: 220px;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            bottom: 110%; /* 上に表示 */
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            font-size: 0.9em;
+            z-index: 10;
+        }
 
-    /* 行にカーソルを合わせた際にツールチップを表示 */
-    .error-row:hover .error-tooltip {
-        visibility: visible;
-        opacity: 1;
-        transform: translateX(-50%) translateY(-5px);
-    }
+        /* 行にカーソルを合わせた際にツールチップを表示 */
+        .error-row:hover .error-tooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
 
-    /* エラーアイコンの点滅 */
-    @keyframes blink {
-        50% { opacity: 0; }
-    }
-    .error-icon {
-        font-size: 1.5em;
-        font-weight: bold;
-        color: red;
-        animation: blink 1s infinite;
-        cursor: help;
-    }
+        /* エラーアイコンの点滅 */
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .error-icon {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: red;
+            animation: blink 1s infinite;
+            cursor: help;
+        }
+
+        .excel-export-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #28a745; /* グリーン系の背景色 */
+            color: white; /* テキストは白 */
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.2em; /* 少し大きめのフォント */
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* ボタンの影 */
+        }
+
+        .excel-export-button:hover {
+            background-color: #218838; /* ホバー時に少し濃いグリーン */
+            transform: translateY(-2px); /* 少し浮き上がる */
+        }
+
+        .excel-export-button:active {
+            background-color: #1e7e34; /* クリック時の色 */
+            transform: translateY(0); /* 元に戻る */
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* 影を小さくする */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>{{ $selectedDate }}の日次打刻データ</h1>
+        <a href="{{ route('dailyAttendance.export', ['companyId' => Auth::user()->id, 'date' => $selectedDate]) }}" class="excel-export-button">
+            エクセルを出力
+        </a>
         <table>
             <thead>
                 <tr>
                     <th>名前</th>
-                    <th>打刻記録</th>
-                    <th>労働時間 (分)</th>
+                    <th>労働時間</th>
+                    <th>休憩時間</th>
                     <th>給与 (円)</th>
                 </tr>
             </thead>
@@ -119,13 +147,13 @@
                         {{ $data['employee']->name }}
                     </td>
                     @php
-                        $totalMinutes = $data['totalDailyBreakHours'] * 60; // 時間を分に変換
+                        $totalMinutes = $data['totalDailyWorkHours'] * 60; // 時間を分に変換
                         $hours = floor($totalMinutes / 60); // 時間部分
                         $minutes = $totalMinutes % 60; // 分部分
                     @endphp
                     <td>{{ sprintf('%02d時間%02d分', $hours, $minutes) }}</td>
                     @php
-                        $totalMinutes = $data['totalDailyWorkHours'] * 60; // 時間を分に変換
+                        $totalMinutes = $data['totalDailyBreakHours'] * 60; // 時間を分に変換
                         $hours = floor($totalMinutes / 60); // 時間部分
                         $minutes = $totalMinutes % 60; // 分部分
                     @endphp

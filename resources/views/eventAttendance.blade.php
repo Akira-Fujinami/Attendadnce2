@@ -13,12 +13,18 @@
         }
 
         .container {
+            position: relative;
             max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 10px;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
+        }
+        .excel-export-form {
+            position: absolute;
+            top: 10px;
+            left: 10px;
         }
 
         h1 {
@@ -27,16 +33,57 @@
             margin-bottom: 20px;
         }
 
-        .dropdown {
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
             margin-bottom: 20px;
         }
 
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
             border-radius: 5px;
-            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .excel-export-button {
+            padding: 15px 30px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            display: block;
+            margin: 0 auto 20px;
+            width: fit-content;
+        }
+
+        .excel-export-button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
         }
 
         table {
@@ -56,32 +103,61 @@
             color: white;
         }
 
-        .btn {
-            display: inline-block;
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+        .text-right {
+            text-align: right;
         }
 
-        .btn:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
+        .dropdown {
+            display: flex;
+            justify-content: center; /* 中央寄せ */
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .dropdown form {
+            width: 100%;
+            max-width: 400px; /* 適度な幅を設定 */
+        }
+
+        .dropdown select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        /* フォーカス時のスタイル */
+        .dropdown select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0px 0px 5px rgba(0, 123, 255, 0.5);
         }
     </style>
 </head>
 <body>
     <div class="container">
-    <h1>{{ $event->name ?? 'イベントごとの出勤簿' }}</h1>
+        <h1>{{ $event->name ?? 'イベントごとの出勤簿' }}</h1>
 
-    <!-- イベント関連のナビゲーションリンク -->
-    <div style="text-align: center; margin-bottom: 20px;">
-        <a href="{{ route('events.create') }}" class="btn">イベントを作成</a>
-        <a href="{{ route('events.index') }}" class="btn">イベント一覧</a>
-    </div>
+        <!-- エクセル出力ボタン -->
+        <form action="{{ route('eventAttendance.export') }}" method="POST" class="excel-export-form">
+            @csrf
+            <input type="hidden" name="event_id" value="{{ $event->id ?? '' }}">
+            <input type="hidden" name="company_id" value="{{ Auth::user()->id }}">
+            <button type="submit" class="excel-export-button" {{ empty($event) ? 'disabled' : '' }}>
+                エクセルを出力
+            </button>
+        </form>
+
+        <!-- ボタン一覧 -->
+        <div class="button-container">
+            <a href="{{ route('staff') }}" class="btn btn-secondary">⬅ スタッフ一覧へ戻る</a>
+            <a href="{{ route('events.create') }}" class="btn">イベントを作成</a>
+            <a href="{{ route('events.index') }}" class="btn">イベント一覧</a>
+        </div>
 
         <!-- イベント選択 -->
         <div class="dropdown">
@@ -123,14 +199,16 @@
                     </td>
                     <td>¥{{ number_format($employee->totalSalary) }}</td>
                     <td>
-                        <a href="{{ route('attendanceDetail', ['employeeId' => $employee->id,'year' => $event->fromDate, 'month' => $event->toDate, 'eventId' => $event->id]) }}" class="btn">詳細</a>
+                        <a href="{{ route('attendanceDetail', ['employeeId' => $employee->id, 'year' => $event->fromDate, 'month' => $event->toDate, 'eventId' => $event->id]) }}" class="btn">
+                            詳細
+                        </a>
                     </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="4" style="text-align: right;">総給与:</th>
+                    <th colspan="4" class="text-right">総給与:</th>
                     <th>¥{{ number_format($totalSalary) }}</th>
                 </tr>
             </tfoot>

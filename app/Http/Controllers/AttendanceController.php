@@ -401,6 +401,7 @@ class AttendanceController extends Controller
     
         $employees = Employee::where('company_id', $request->companyId)->get();
         $data = [];
+        $totalSalary = 0;
     
         foreach ($employees as $employee) {
             $summary = DailySummary::where('company_id', $request->companyId)
@@ -413,6 +414,8 @@ class AttendanceController extends Controller
             
             // 表示用
             $formattedWorkHours = sprintf('%02d時間%02d分', $summary->totalWorkHours, $workMinutes);
+            $salary = $summary->totalSalary ?? 0;
+            $totalSalary += $salary;
     
             $data[] = [
                 'name' => $employee->name,
@@ -434,6 +437,7 @@ class AttendanceController extends Controller
                 '¥' . number_format($row['totalSalary']),
             ];
         }
+        $csvData[] = ['', '', '全体の総給与', '¥' . number_format($totalSalary)];
     
         // CSVを出力
         $currentDateTime = now()->format('Ymd_His'); // 例: 20231231_123456
@@ -467,54 +471,4 @@ class AttendanceController extends Controller
             'selectedDate' => $selectedDate,
         ]);
     }
-
-    public function showDailyAttendance($date)
-    {
-        // 選択された日付
-        $selectedDate = Carbon::parse($date);
-
-        // 全従業員の打刻データを取得
-        $employees = Employee::join('adit_logs', 'employees.id', '=', 'adit_logs.employee_id')
-        ->where('employees.company_id', Auth::user()->id) // 現在の会社の従業員
-        ->whereDate('adit_logs.date', $selectedDate->toDateString()) // 選択した日付の打刻データ
-        ->selectRaw(
-            'employees.id as employee_id, 
-             employees.name, 
-             employees.company_id'
-        )
-        ->groupBy('employees.id', 'employees.name', 'employees.company_id') // 必要なカラムをすべて GROUP BY に追加
-        ->get();
-        $attendanceData = [];
-        $totalSalary = 0;
-
-        foreach ($employees as $employee) {
-
-            // 給与の計算
-            $summary = DailySummary::where('company_id', Auth::User()->id)
-            ->where('employee_id', $employee->employee_id)
-            ->where('date', $selectedDate->toDateString())
-            ->selectRaw('total_work_hours, total_break_hours, salary')
-            ->first();
-            $totalDailySalary = $summary->salary ?? 0;
-            $totalDailyWorkHours = $summary->total_work_hours ?? 0;
-            $totalDailyBreakHours = $summary->total_break_hours ?? 0;
-            $totalSalary += $totalDailySalary;
-            $error = AditController::error(Auth::User()->id, $employee->employee_id, $selectedDate->toDateString());
-
-            $attendanceData[] = [
-                'employee' => $employee,
-                'totalDailySalary' => $totalDailySalary,
-                'totalDailyWorkHours' => $totalDailyWorkHours,
-                'totalDailyBreakHours' => $totalDailyBreakHours,
-                'error' => $error
-            ];
-        }
-
-        return view('dailyAttendance', [
-            'selectedDate' => $selectedDate->toDateString(),
-            'attendanceData' => $attendanceData,
-            'totalSalary' => $totalSalary,
-        ]);
-    }
-
 }

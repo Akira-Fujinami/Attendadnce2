@@ -9,6 +9,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AppliedAditController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AttendanceDetailsController;
+use App\Http\Controllers\DailyAttendanceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -52,15 +53,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/adit/reject', [AppliedAditController::class, 'rejectAdit'])->name('adit.reject');
     Route::get('/attendance/export', [AttendanceController::class, 'exportAttendanceList'])->name('attendance.export');
     Route::get('/calendar', [AttendanceController::class, 'showCalendar'])->name('showCalendar');
-    Route::get('/attendance/daily/{date}', [AttendanceController::class, 'showDailyAttendance'])->name('attendance.daily');
+    Route::get('/attendance/daily/{date}', [DailyAttendanceController::class, 'showDailyAttendance'])->name('attendance.daily');
     Route::get('/eventAttendance', [EventController::class, 'show'])->name('events.show');
     Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
     Route::get('/events/show', [EventController::class, 'index'])->name('events.index');
     Route::post('/events/delete/{event}', [EventController::class, 'delete'])->name('events.delete');
     Route::post('/events', [EventController::class, 'store'])->name('events.store');
+    Route::post('/events/export', [EventController::class, 'export'])->name('eventAttendance.export');
     Route::post('/attendance/update/{id}', [AttendanceDetailsController::class, 'update'])->name('attendance.update');
     Route::post('/attendance/delete/{id}', [AttendanceDetailsController::class, 'delete'])->name('attendance.delete');
     Route::post('/attendance/store', [AttendanceDetailsController::class, 'store'])->name('attendance.store');
+    Route::get('/dailyAttendance/export', [DailyAttendanceController::class, 'exportDailyAttendance'])->name('dailyAttendance.export');
 });
 Route::middleware(['auth:employees', 'App\Http\Middleware\SessionTimeout'])->group(function () {
     Route::get('/adit', [AditController::class, 'index'])->name('adit');
