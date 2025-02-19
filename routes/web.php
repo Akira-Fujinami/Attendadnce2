@@ -15,16 +15,6 @@ use App\Http\Controllers\DailyAttendanceController;
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/attendance', function () {
-    return view('attendance');
-})->name('attendance');
-Route::get('/change', function () {
-    return view('change');
-})->name('change');
-Route::get('/staffCreate', function () {
-    return view('staffCreate');
-})->name('staffCreate');
-Route::post('/employeeCreate', [StaffController::class, 'create'])->name('employeeCreate');
 Route::get('/passwordReset', function () {
     return view('passwordReset');
 })->name('passwordReset');
@@ -66,6 +56,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/attendance/delete/{id}', [AttendanceDetailsController::class, 'delete'])->name('attendance.delete');
     Route::post('/attendance/store', [AttendanceDetailsController::class, 'store'])->name('attendance.store');
     Route::get('/dailyAttendance/export', [DailyAttendanceController::class, 'exportDailyAttendance'])->name('dailyAttendance.export');
+    Route::get('/staffCreate', function () { return view('staffCreate');})->name('staffCreate');
+    Route::post('/employeeCreate', [StaffController::class, 'create'])->name('employeeCreate');
 });
 Route::middleware(['auth:employees', 'App\Http\Middleware\SessionTimeout'])->group(function () {
     Route::get('/adit', [AditController::class, 'index'])->name('adit');

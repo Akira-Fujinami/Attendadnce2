@@ -223,17 +223,32 @@
             font-weight: bold;
             margin-top: 10px;
         }
-
+        .logout-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
 
     </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const logoutForm = document.getElementById("logout-form");
+            const logoutButton = document.getElementById("logout-btn");
+
+            logoutForm.addEventListener("submit", function(event) {
+                logoutButton.disabled = true; // ボタンを無効化
+                logoutButton.textContent = "処理中..."; // ログイン中のメッセージに変更
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
         <div class="header-container">
             <nav class="top-links">
-                <form action="{{ route('logout') }}" method="POST" class="logout-form">
+                <form action="{{ route('logout') }}" method="POST" class="logout-form" id="logout-form">
                     @csrf
-                    <button type="submit" class="btn logout-btn">
+                    <button type="submit" class="btn logout-btn" id="logout-btn">
                         🚪 ログアウト
                     </button>
                 </form>
