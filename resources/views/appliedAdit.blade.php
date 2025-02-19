@@ -27,6 +27,13 @@
             margin-bottom: 20px;
         }
 
+        h2 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -94,6 +101,7 @@
 <body>
     <div class="container">
         <h1>未承認打刻一覧</h1>
+
         <div class="filter-dropdown" style="text-align: center; margin-bottom: 20px;">
             <form action="{{ route('appliedAdit', ['companyId' => Auth::user()->id]) }}" method="GET" id="filterForm">
                 <select name="status" id="statusFilter" onchange="document.getElementById('filterForm').submit()" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
@@ -103,25 +111,23 @@
             </form>
         </div>
 
-
         @if (!empty($pendingRecords))
-            <table>
-                <thead>
-                    <tr>
-                        <th>スタッフ名</th>
-                        <th>日付</th>
-                        <th>修正前の時間</th>
-                        <th>修正後の時間</th>
-                        <th>打刻項目</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($pendingRecords as $date => $records)
+            @foreach ($pendingRecords as $employeeName => $records)
+                <h2>{{ $employeeName }}</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>名前</th>
+                            <th>修正前の時間</th>
+                            <th>修正後の時間</th>
+                            <th>打刻項目</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         @foreach ($records as $record)
                         <tr>
                             <td>{{ $record['name'] }}</td>
-                            <td>{{ $record['date'] }}</td>
                             <td>
                                 @if ($record['previous_time'] !== 'なし')
                                     {{ \Carbon\Carbon::parse($record['previous_time'])->format('H:i') }}
@@ -145,7 +151,8 @@
                                         'work_end' => '退勤',
                                     ];
                                 @endphp
-                                {{ $aditLabels[$record['adit_item']] ?? '不明な項目' }}</td>
+                                {{ $aditLabels[$record['adit_item']] ?? '不明な項目' }}
+                            </td>
                             <td>
                                 <form method="POST" action="{{ route('adit.approve') }}" style="margin-bottom: 5px;">
                                     @csrf
@@ -175,9 +182,9 @@
                             </td>
                         </tr>
                         @endforeach
-                    @endforeach
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            @endforeach
         @else
             @if($currentStatus == 'rejected')
             <p>却下済みの打刻はありません。</p>

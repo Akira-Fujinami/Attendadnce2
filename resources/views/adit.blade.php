@@ -122,6 +122,17 @@
             text-decoration: underline;
             opacity: 0.8; /* マウスホバー時に少し透明感を追加 */
         }
+
+        .logout-message {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -139,6 +150,11 @@
     </div>
 
     <div class="container">
+        @if($data['latestAdit'])
+            <div class="logout-message">
+                ⚠ 打刻が完了したら、ログアウトして安全に終了してください。
+            </div>
+        @endif
         <h1>{{ Auth::user()->name }} さん</h1>
         <div class="time-display" id="current-time">
             <!-- 時間がここに表示されます -->
@@ -184,6 +200,23 @@
             </li>
         @endforeach
     @endif
+    @if (!empty($data['rejected']))
+        @foreach($data['rejected'] as $rejected)
+            <li>
+                <a href="{{ route('editAttendance', ['date' => $rejected['date'], 'employeeId' => Auth::User()->id]) }}" class="error-link">
+                    {{ $rejected['date'] }}:
+                    <span class="error-message">
+                        @foreach ($rejected['records'] as $record)
+                            {{ $record['time'] }}（{{ ($record['type']) }}）
+                        @endforeach
+                        の打刻が却下されました
+                    </span>
+                </a>
+            </li>
+        @endforeach
+    @endif
+
+
 
 
 </div>

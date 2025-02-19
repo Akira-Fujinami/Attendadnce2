@@ -251,7 +251,8 @@
                             </span>
                         @elseif ($recordsForDate && $recordsForDate['has_pending'])
                             <span class="pending-tooltip">
-                                未承認の打刻があります
+                                未承認の打刻があります<br>
+                                承認されると時刻が反映されます
                             </span>
                         @endif
                         <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $date }}</a>

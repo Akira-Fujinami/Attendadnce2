@@ -58,6 +58,21 @@ class AttendanceDetailsController extends Controller
             'minutes' => 'required|date_format:H:i',
             'adit_item' => 'required|in:work_start,break_start,break_end,work_end',
         ]);
+        $records = Adit::where('company_id', Auth::User()->id)
+        ->where('employee_id', $request->employee)
+        ->where('date', $request->date)
+        ->whereIn('adit_item', ['work_start', 'work_end'])
+        ->where('status', 'approved')
+        ->pluck('adit_item') // `adit_item` のみ取得
+        ->toArray();
+
+        // 既に同じ打刻が存在する場合、バリデーションエラーを返す
+        if (in_array($validatedData['adit_item'], $records)) {
+            return redirect()->back()
+                ->withErrors(['adit_item' => '既に打刻されています。'])
+                ->withInput();
+        }
+
         $newDatetime = Carbon::parse($request->date . ' ' . $request->input('minutes'))->format('Y-m-d H:i:s');
 
         $adit = Adit::create([

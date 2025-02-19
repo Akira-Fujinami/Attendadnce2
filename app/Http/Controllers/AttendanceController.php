@@ -161,7 +161,7 @@ class AttendanceController extends Controller
         $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
         $totalSalary = 0;
         // 全スタッフの出勤情報を取得
-        $employees = Employee::where('company_id', $request->companyId)->get();
+        $employees = Employee::where('company_id', $request->companyId)->where('retired', '在職中')->get();
         foreach ($employees as $employee) {
             $summary = DailySummary::where('company_id', $request->companyId)
             ->where('employee_id', $employee->id)
@@ -267,6 +267,7 @@ class AttendanceController extends Controller
         $year = Carbon::parse($date)->year;
         $month = Carbon::parse($date)->month;
         $day = Carbon::parse($date)->day;
+        $name = Employee::where('id', Auth::User()->id)->where('company_id', Auth::User()->company_id)->first()->name;
         // 日付が未来または明日かどうかを確認
         if (Carbon::parse($date)->isFuture() || Carbon::parse($date)->isTomorrow()) {
             return view('editAttendance', [
@@ -274,8 +275,23 @@ class AttendanceController extends Controller
                 'year' => $year,
                 'month' => $month,
                 'day' => $day,
+                'name' => $name,
             ]);
         }
+        $recruit = Employee::where('id', Auth::User()->id)
+                    ->where('company_id', Auth::User()->company_id)
+                    ->first();
+
+        if ($recruit && Carbon::parse($recruit->created_at)->gt(Carbon::parse($date))) {
+            return view('editAttendance', [
+                'disable' => 1,
+                'year' => $year,
+                'month' => $month,
+                'day' => $day,
+                'name' => $name,
+            ]);
+        }
+
 
         // 該当する従業員とその日付の打刻データを取得
         $records = Adit::where('employee_id', $employeeId)
@@ -284,6 +300,10 @@ class AttendanceController extends Controller
             ->whereIn('status', ['approved', 'pending'])
             ->orderBy('created_at', 'asc') // 古い順にソート
             ->get();
+
+        $pendingRecords = $records->contains(function ($record) {
+                return $record->status === 'pending' && $record->deleted === 0;
+            });
 
         // 出勤、休憩開始、休憩終了、退勤に分ける
         $aditItems = ['work_start', 'break_start', 'break_end', 'work_end'];
@@ -296,7 +316,6 @@ class AttendanceController extends Controller
                 'currentRecord' => $filteredRecords->where('status', 'pending')->values()->all(), // 最新のレコード
             ];            
         }
-        $name = Employee::where('id', Auth::User()->id)->where('company_id', Auth::User()->company_id)->first()->name;
 
         // Bladeに渡すデータ
         return view('editAttendance', [
@@ -305,6 +324,7 @@ class AttendanceController extends Controller
             'name' => $name,
             'employeeId' => $employeeId,
             'records' => $data,
+            'pending' => $pendingRecords,
             'year' => $year,
             'month' => $month,
             'day' => $day,
@@ -325,6 +345,19 @@ class AttendanceController extends Controller
         $aditItems = array_filter($aditItems, function ($time) {
             return !is_null($time);
         });
+        $exists = Adit::where('employee_id', $request->employeeId)
+        ->where('company_id', $request->companyId)
+        ->where('minutes', $request->minutes)
+        ->where('adit_item', $request->adit_item)
+        ->where('status', 'pending')
+        ->where('deleted', 1)
+        ->exists();
+
+        if ($exists) {
+            return redirect()->back()
+                ->withErrors(['minutes' => '削除待ちの打刻は操作できません。'])
+                ->withInput();
+        }
     
         // 対象のレコードを取得
         $attendanceRecord = Adit::where('employee_id', $request->employeeId)

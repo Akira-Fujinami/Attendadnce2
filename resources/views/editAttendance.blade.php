@@ -279,6 +279,17 @@
             color: #333;
         }
 
+        .warning-message {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -303,6 +314,22 @@
 
         <h1>打刻修正画面</h1>
         @if(!$disable)
+            @if ($pending)
+                <div class="warning-message">
+                    ⚠ 未承認の打刻データがあります。<br>
+                    未承認の打刻を削除するには、時間を **削除** してから「保存」を押してください。<br>
+                    （Windows: `Backspace` / Mac: `Delete`）
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="warning-message">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
         <table>
             <thead>
                 <tr>
@@ -559,7 +586,7 @@
         </div>
         @elseif ($disable)
         <div style="text-align: center; margin: 20px 0; padding: 20px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px;">
-            <strong>この日付の打刻データは未来日の為、修正できません。</strong>
+            <strong>この日付の打刻データは修正できません。</strong>
         </div>
         @endif
     </div>

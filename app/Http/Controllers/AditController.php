@@ -61,6 +61,7 @@ class AditController extends Controller
 
         $errors = [];
         $pending = [];
+        $rejected = [];
         // エラーに追加
         foreach ($aditRecords as $date => $records) {
             $errorExists = self::error($user->company_id, $user->id, $date);
@@ -82,6 +83,31 @@ class AditController extends Controller
                     'pending' => 1,
                 ];
             }
+            $aditTypes = [
+                'work_start' => '出勤',
+                'work_end' => '退勤',
+                'break_start' => '休憩開始',
+                'break_end' => '休憩終了',
+            ];
+            
+            $rejectedRecords = Adit::whereDate('date', $date)
+                ->where('employee_id', $user->id)
+                ->where('company_id', $user->company_id)
+                ->where('status', 'rejected')
+                ->get();
+            
+            if ($rejectedRecords->isNotEmpty()) {
+                $rejected[] = [
+                    'date' => $date,
+                    'records' => $rejectedRecords->map(function ($record) use ($aditTypes) {
+                        return [
+                            'time' => \Carbon\Carbon::parse($record->minutes)->format('H:i'),
+                            'type' => $aditTypes[$record->adit_item] ?? $record->adit_item, // 日本語に変換
+                        ];
+                    })->toArray(),
+                ];
+            }
+            
         }
 
         // dd($latestAdit);
@@ -92,6 +118,7 @@ class AditController extends Controller
             'aditExists' => $aditExists,
             'errors' => $errors,
             'pending' => $pending,
+            'rejected' => $rejected,
         ];
 
         return view('adit', compact('data'));
@@ -101,7 +128,7 @@ class AditController extends Controller
             'company_id' => $request->company_id,
             'employee_id' => $request->employee_id,
             'date' => now()->format('Y-m-d'),
-            'minutes' => now(),
+            'minutes' => now()->format('Y-m-d H:i'),
             'adit_item' => $request->adit_item,
             'status' => 'approved',
         ]);

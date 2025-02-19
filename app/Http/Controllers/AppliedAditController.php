@@ -19,7 +19,7 @@ class AppliedAditController extends Controller
                                 $query->where('status', $statusFilter);
                             })
                             ->with(['employee:id,name,hourly_wage,transportation_fee']) // 必要なカラムを指定
-                            ->orderBy('created_at', 'desc')
+                            ->orderBy('date', 'asc')
                             ->get()
                             ->groupBy('date') // 日付ごとにグループ化
                             ->map(function ($records) {
@@ -49,7 +49,6 @@ class AppliedAditController extends Controller
                                 });
                             })
                             ->toArray();
-                            // dd($pendingRecords);
                         
     
         return view('appliedAdit', [
