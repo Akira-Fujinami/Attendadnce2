@@ -209,7 +209,7 @@
                 </tr>
             </tfoot>
         </table>
-        <a href="{{ route('staff') }}" class="back-btn">戻る</a>
+        <a href="{{ route('top') }}" class="back-btn">戻る</a>
     </div>
 </body>
 </html>

@@ -19,7 +19,7 @@ class LoginController extends Controller
         if ($user && Hash::check($request->password, $user->password)) {
             session(['last_login_email' => $request->email]);
             Auth::login($user);
-            return redirect()->route('staff')
+            return redirect()->route('top')
             ->withCookie(cookie('email', $request->email, 60 * 24 * 30))
             ->with('success', 'ログインに成功しました');
         }

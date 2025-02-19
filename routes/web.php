@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\IndexController;
 use App\Http\Controllers\AditController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AppliedAditController;
@@ -41,6 +42,7 @@ Route::get('/login', function () {
 
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::middleware(['auth'])->group(function () {
+    Route::get('/top', [IndexController::class, 'index'])->name('top');
     Route::get('/staff', [StaffController::class, 'index'])->name('staff');
     Route::get('/staffDetail', [StaffController::class, 'detail'])->name('staffDetail');
     Route::get('/staffEdit', [StaffController::class, 'edit'])->name('staffEdit');

@@ -186,7 +186,7 @@
             @endif
         @endif
 
-        <a href="{{ route('staff') }}" class="back-button">スタッフ一覧に戻る</a>
+        <a href="{{ route('top') }}" class="back-button">トップに戻る</a>
     </div>
 </body>
 </html>

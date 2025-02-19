@@ -154,7 +154,7 @@
 
         <!-- ボタン一覧 -->
         <div class="button-container">
-            <a href="{{ route('staff') }}" class="btn btn-secondary">⬅ スタッフ一覧へ戻る</a>
+            <a href="{{ route('top') }}" class="btn btn-secondary">⬅ トップへ戻る</a>
             <a href="{{ route('events.create') }}" class="btn">イベントを作成</a>
             <a href="{{ route('events.index') }}" class="btn">イベント一覧</a>
         </div>

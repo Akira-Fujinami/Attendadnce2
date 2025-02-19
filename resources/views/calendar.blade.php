@@ -126,7 +126,7 @@
             </tbody>
         </table>
         <div class="back-link">
-            <a href="{{ route('staff') }}">スタッフ一覧に戻る</a>
+            <a href="{{ route('top') }}">トップに戻る</a>
         </div>
     </div>
 </body>
