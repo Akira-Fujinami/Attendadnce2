@@ -23,7 +23,11 @@ class DailyAttendanceController extends Controller
         $startDate = now()->startOfMonth()->toDateString();
         $endDate = now()->endOfMonth()->toDateString();
     
-        $employees = Employee::where('company_id', $request->companyId)->get();
+        $employees = Employee::join('daily_summaries', 'employees.id', '=', 'daily_summaries.employee_id')
+                    ->where('employees.company_id', $request->companyId)
+                    ->select('employees.*') // 必要なら `daily_summaries.*` も追加
+                    ->distinct() // 重複を防ぐ
+                    ->get();
         $data = [];
         $totalSalary = 0;
     
