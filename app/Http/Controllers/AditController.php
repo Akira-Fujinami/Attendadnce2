@@ -91,10 +91,17 @@ class AditController extends Controller
             ];
             
             $rejectedRecords = Adit::whereDate('date', $date)
-                ->where('employee_id', $user->id)
-                ->where('company_id', $user->company_id)
-                ->where('status', 'rejected')
-                ->get();
+            ->where('employee_id', $user->id)
+            ->where('company_id', $user->company_id)
+            ->where('status', 'rejected')
+            ->orderBy('created_at', 'desc') // 最新のレコードを取得しやすいようにソート
+            ->get()
+            ->groupBy('adit_item') // adit_itemごとにグループ化
+            ->map(function ($records) {
+                return $records->first(); // 各グループの最新のレコードを取得
+            })
+            ->values(); // 配列のキーをリセット
+        
             
             if ($rejectedRecords->isNotEmpty()) {
                 $rejected[] = [

@@ -97,8 +97,23 @@
         .links a:hover {
             text-decoration: underline;
         }
+
+        .login-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
     </style>
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const loginForm = document.getElementById("login-form");
+            const loginButton = document.getElementById("login-btn");
+
+            loginForm.addEventListener("submit", function(event) {
+                loginButton.disabled = true; // ボタンを無効化
+                loginButton.textContent = "処理中..."; // ログイン中のメッセージに変更
+            });
+        });
         function togglePassword() {
             let passwordField = document.getElementById("password");
             let toggleIcon = document.querySelector(".toggle-password");
@@ -120,7 +135,7 @@
             <div style="color: red;">{{ $errors->first('email') }}</div>
         @endif
 
-        <form action="/login" method="POST">
+        <form action="/login" method="POST" id="login-form">
             @csrf
             <div class="form-group">
                 <label for="email">メールアドレス:</label>
@@ -131,7 +146,7 @@
                 <input type="password" id="password" name="password" placeholder="パスワード" required>
                 <span class="toggle-password" onclick="togglePassword()">👁️</span>
             </div>
-            <button type="submit" class="login-btn">ログイン</button>
+            <button type="submit" class="login-btn" id="login-btn">ログイン</button>
         </form>
         <div class="links">
             <a href="{{ route('passwordReset') }}">パスワードをお忘れですか？</a><br>
