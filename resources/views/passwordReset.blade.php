@@ -33,7 +33,8 @@
         }
 
         .reset-container input[type="e-mail"],
-        .reset-container input[type="password"] {
+        .reset-container input[type="password"],
+        .reset-container input[type="text"] {
             width: 100%;
             padding: 10px;
             margin: 10px -9px;
@@ -81,7 +82,37 @@
             font-size: 0.9em;
             margin-top: 10px;
         }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        .toggle-password:hover {
+            color: #007BFF;
+        }
+        .form-group {
+            text-align: left;
+            position: relative;
+        }
     </style>
+    <script>
+        function togglePassword(element) {
+            let passwordField = element.previousElementSibling;
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                element.textContent = "🙈"; // 目を閉じたアイコン
+            } else {
+                passwordField.type = "password";
+                element.textContent = "👁️"; // 目のアイコン
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="reset-container">
@@ -98,14 +129,20 @@
             @error('mail')
                 <p class="error">{{ $message }}</p>
             @enderror
-            <input type="password" name="new_password" placeholder="新しいパスワード" required>
-            @error('new_password')
-                <p class="error">{{ $message }}</p>
-            @enderror
-            <input type="password" name="new_password_confirmation" placeholder="パスワードを確認" required>
-            @error('new_password_confirmation')
-                <p class="error">{{ $message }}</p>
-            @enderror
+            <div class="form-group">
+                <input type="password" name="new_password" placeholder="新しいパスワード" required>
+                <span class="toggle-password" onclick="togglePassword(this)">👁️</span>
+                @error('new_password')
+                    <p class="error">{{ $message }}</p>
+                @enderror
+            </div>
+            <div class="form-group">
+                <input type="password" name="new_password_confirmation" placeholder="パスワードを確認" required>
+                <span class="toggle-password" onclick="togglePassword(this)">👁️</span>
+                @error('new_password_confirmation')
+                    <p class="error">{{ $message }}</p>
+                @enderror
+            </div>
             <button type="submit">リセット</button>
         </form>
         <a href="/login">ログイン画面に戻る</a>

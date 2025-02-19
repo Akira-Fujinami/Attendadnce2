@@ -35,6 +35,7 @@
         .form-group {
             margin-bottom: 15px;
             text-align: left;
+            position: relative;
         }
 
         label {
@@ -44,12 +45,26 @@
             font-size: 0.9em;
         }
 
-        input[type="email"], input[type="password"] {
+        input[type="email"], input[type="password"], input[type="text"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1em;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 65%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        .toggle-password:hover {
+            color: #007BFF;
         }
 
         .login-btn {
@@ -83,6 +98,20 @@
             text-decoration: underline;
         }
     </style>
+    <script>
+        function togglePassword() {
+            let passwordField = document.getElementById("password");
+            let toggleIcon = document.querySelector(".toggle-password");
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleIcon.textContent = "🙈"; // アイコンを変更（目を閉じた絵文字）
+            } else {
+                passwordField.type = "password";
+                toggleIcon.textContent = "👁️"; // アイコンを変更（目の絵文字）
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="login-container">
@@ -100,6 +129,7 @@
             <div class="form-group">
                 <label for="password">パスワード</label>
                 <input type="password" id="password" name="password" placeholder="パスワード" required>
+                <span class="toggle-password" onclick="togglePassword()">👁️</span>
             </div>
             <button type="submit" class="login-btn">ログイン</button>
         </form>

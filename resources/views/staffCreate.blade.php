@@ -36,6 +36,7 @@
 
         .form-group {
             margin-bottom: 15px;
+            position: relative;
         }
 
         .form-group label {
@@ -95,7 +96,35 @@
         .button-group button:hover {
             opacity: 0.9;
         }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 70%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        .toggle-password:hover {
+            color: #007BFF;
+        }
     </style>
+    <script>
+        function togglePassword() {
+            let passwordField = document.getElementById("password");
+            let toggleIcon = document.querySelector(".toggle-password");
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleIcon.textContent = "🙈"; // アイコンを変更（目を閉じた絵文字）
+            } else {
+                passwordField.type = "password";
+                toggleIcon.textContent = "👁️"; // アイコンを変更（目の絵文字）
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="form-container">
@@ -133,6 +162,7 @@
             <div class="form-group">
                 <label for="password">パスワード:</label>
                 <input type="password" id="password" name="password" placeholder="パスワードを入力">
+                <span class="toggle-password" onclick="togglePassword()">👁️</span>
                 @error('password')
                     <p class="error">{{ $message }}</p>
                 @enderror

@@ -22,7 +22,7 @@ class RegisterController extends Controller
                 'unique:users,email', // usersテーブルで重複チェック
                 'unique:employees,email', // employeesテーブルで重複チェック
             ],
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:3|confirmed',
         ],[
             'name.required' => '名前は必須です。',
             'name.string' => '名前は文字列で入力してください。',
@@ -36,7 +36,7 @@ class RegisterController extends Controller
             
             'password.required' => 'パスワードは必須です。',
             'password.string' => 'パスワードは文字列で入力してください。',
-            'password.min' => 'パスワードは8文字以上で入力してください。',
+            'password.min' => 'パスワードは3文字以上で入力してください。',
             'password.confirmed' => 'パスワードが確認用と一致しません。',
         ]);
 

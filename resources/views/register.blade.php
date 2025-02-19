@@ -95,7 +95,38 @@
             font-size: 14px;
         }
 
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 55%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        .toggle-password:hover {
+            color: #007BFF;
+        }
+        .form-group {
+            text-align: left;
+            position: relative;
+        }
+
     </style>
+    <script>
+        function togglePassword(element) {
+            let passwordField = element.previousElementSibling;
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                element.textContent = "🙈"; // 目を閉じたアイコン
+            } else {
+                passwordField.type = "password";
+                element.textContent = "👁️"; // 目のアイコン
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -118,11 +149,16 @@
             <label for="email">メールアドレス:</label>
             <input type="email" id="email" name="email" placeholder="例: yamada@example.com" required>
 
-            <label for="password">パスワード:</label>
-            <input type="password" id="password" name="password" placeholder="パスワードを入力" required>
-
-            <label for="password_confirmation">パスワード確認</label>
-            <input type="password" id="password_confirmation" name="password_confirmation" required>
+            <div class="form-group">
+                <label for="password">パスワード:</label>
+                <input type="password" id="password" name="password" placeholder="パスワードを入力" required>
+                <span class="toggle-password" onclick="togglePassword(this)">👁️</span>
+            </div>
+            <div class="form-group">
+                <label for="password_confirmation">パスワード確認</label>
+                <input type="password" id="password_confirmation" name="password_confirmation" required>
+                <span class="toggle-password" onclick="togglePassword(this)">👁️</span>
+            </div>
 
             <div class="btn-container">
                 <button type="submit" class="btn btn-primary">登録</button>

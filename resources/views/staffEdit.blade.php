@@ -92,7 +92,39 @@
         .back-link a:hover {
             text-decoration: underline;
         }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 55%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        .toggle-password:hover {
+            color: #007BFF;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+            position: relative;
+        }
     </style>
+    <script>
+        function togglePassword() {
+            let passwordField = document.getElementById("password");
+            let toggleIcon = document.querySelector(".toggle-password");
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggleIcon.textContent = "🙈"; // アイコンを変更（目を閉じた絵文字）
+            } else {
+                passwordField.type = "password";
+                toggleIcon.textContent = "👁️"; // アイコンを変更（目の絵文字）
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -113,11 +145,14 @@
                 <p class="error">{{ $message }}</p>
             @enderror
 
-            <label for="password">パスワード</label>
-            <input type="password" id="password" name="password" placeholder="パスワードを変更する場合入力">
-            @error('password')
-                <p class="error">{{ $message }}</p>
-            @enderror
+            <div class="form-group">
+                <label for="password">パスワード</label>
+                <input type="password" id="password" name="password" placeholder="パスワードを変更する場合入力">
+                <span class="toggle-password" onclick="togglePassword()">👁️</span>
+                @error('password')
+                    <p class="error">{{ $message }}</p>
+                @enderror
+            </div>
 
             <label for="transportation_fee">交通費</label>
             <input type="text" id="transportation_fee" name="transportation_fee" value="{{ old('transportation_fee', $employee->transportation_fee) }}">
