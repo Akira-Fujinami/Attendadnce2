@@ -6,8 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
 use App\Models\Adit;
+use App\Models\User;
 use App\Models\DailySummary;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
 class StaffController extends Controller
@@ -114,7 +116,13 @@ class StaffController extends Controller
         $validatedData = $request->validate(
             [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255|unique:employees,email,',
+                'email' => [
+                    'required',
+                    'email',
+                    'max:255',
+                    Rule::unique('employees', 'email'), // employees テーブルの重複を許さない（現在のIDは除外）
+                    Rule::unique('users', 'email'), // users テーブルの重複を許さない
+                ],
                 'password' => 'nullable|string|min:3',
                 'transportation' => 'required|numeric',
                 'wage' => 'required|numeric',
@@ -134,6 +142,24 @@ class StaffController extends Controller
                 'retired.in' => '在籍状況は「在職中」または「退職済み」を選択してください。',
             ]
         );
+    
+        // Employee のパスワードチェック
+        $EmployeesAdmin = Employee::where('company_id', Auth::User()->id)->get();
+        foreach ($EmployeesAdmin as $employeeAdmin) {
+            if (Hash::check($validatedData['password'], $employeeAdmin->password)) {
+                return redirect()->back()
+                    ->withErrors(['password' => 'このパスワードは使用できません。（他の従業員のパスワードと同じです）'])
+                    ->withInput();
+            }
+        }
+        $user = User::where('id', Auth::User()->id)->first();
+
+        // User のパスワードチェック
+        if (Hash::check($validatedData['password'], $user->password)) {
+            return redirect()->back()
+                ->withErrors(['password' => 'このパスワードは使用できません。（他の従業員のパスワードと同じです）'])
+                ->withInput();
+        }
         Employee::create([
             'company_id' => Auth::User()->id,
             'name' => $request->name,
@@ -153,7 +179,13 @@ class StaffController extends Controller
         $validatedData = $request->validate(
             [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255|unique:employees,email,' . $id,
+                'email' => [
+                    'required',
+                    'email',
+                    'max:255',
+                    Rule::unique('employees', 'email')->ignore($id), // employees テーブルの重複を許さない（現在のIDは除外）
+                    Rule::unique('users', 'email'), // users テーブルの重複を許さない
+                ],
                 'password' => 'nullable|string|min:3',
                 'transportation_fee' => 'required|numeric',
                 'hourly_wage' => 'required|numeric',
@@ -174,6 +206,29 @@ class StaffController extends Controller
                 'retired.in' => '在籍状況は「在職中」または「退職済み」を選択してください。',
             ]
         );
+        $EmployeeAdmin = Employee::where('email', $request->email)->first();
+        if ($EmployeeAdmin) {
+            // 関連する Employee を取得
+            $employeesAdmin = Employee::where('company_id', $EmployeeAdmin->company_id)
+            ->where('email','!=',$request->email)->get();
+    
+            // Employee のパスワードチェック
+            foreach ($employeesAdmin as $employeeAdmin) {
+                if (Hash::check($validatedData['password'], $employeeAdmin->password)) {
+                    return redirect()->back()
+                        ->withErrors(['password' => 'このパスワードは使用できません。（他の従業員のパスワードと同じです）'])
+                        ->withInput();
+                }
+            }
+            $user = User::where('id', $employeeAdmin->company_id)->first();
+    
+            // User のパスワードチェック
+            if (Hash::check($validatedData['password'], $user->password)) {
+                return redirect()->back()
+                    ->withErrors(['password' => 'このパスワードは使用できません。（他の従業員のパスワードと同じです）'])
+                    ->withInput();
+            }
+        }
         
     
         // 更新対象の従業員レコードを取得

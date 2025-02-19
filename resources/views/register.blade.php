@@ -74,11 +74,42 @@
         .btn-secondary:hover {
             background-color: #5a6268;
         }
+        .error-box {
+            border: 2px solid #ff4d4d; /* 赤い枠 */
+            background-color: #ffe6e6; /* 薄い赤背景 */
+            color: #cc0000; /* 濃い赤のテキスト */
+            padding: 15px;
+            border-radius: 5px; /* 角を丸くする */
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .error-list {
+            list-style-type: none; /* デフォルトのリストスタイルを削除 */
+            padding: 0;
+            margin: 0;
+        }
+
+        .error-list li {
+            padding: 5px 0;
+            font-size: 14px;
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <h1>新規登録</h1>
+        @if ($errors->any())
+            <div class="alert alert-danger error-box">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form action="{{ route('register.store') }}" method="POST">
         @csrf
             <label for="name">名前:</label>

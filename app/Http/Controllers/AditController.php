@@ -64,6 +64,11 @@ class AditController extends Controller
         // エラーに追加
         foreach ($aditRecords as $date => $records) {
             $errorExists = self::error($user->company_id, $user->id, $date);
+            $pendingRecordExists = Adit::whereDate('date', $date)
+            ->where('employee_id', $user->id)
+            ->where('company_id', $user->company_id)
+            ->where('status', 'pending')
+            ->exists();
             if ($errorExists) {
                 $errors[] = [
                     'date' => $date,
@@ -71,11 +76,6 @@ class AditController extends Controller
                     'pending' => $pendingRecordExists,
                 ];
             }
-            $pendingRecordExists = Adit::whereDate('date', $date)
-            ->where('employee_id', $user->id)
-            ->where('company_id', $user->company_id)
-            ->where('status', 'pending')
-            ->exists();
             if ($pendingRecordExists) {
                 $pending[] = [
                     'date' => $date,
@@ -83,7 +83,6 @@ class AditController extends Controller
                 ];
             }
         }
-        // dd($errors);
 
         // dd($latestAdit);
         $data = [

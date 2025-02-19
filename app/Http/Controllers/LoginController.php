@@ -79,6 +79,44 @@ class LoginController extends Controller
         if (!$admin && !$employee) {
             return redirect()->back()->with('error', '入力されたメールアドレスが登録されてません。');
         }
+        $user = User::where('email', $request->mail)->first();
+        if ($user) {
+            // 関連する Employee を取得
+            $employeesAdmin = Employee::where('company_id', $user->id)->get();
+    
+            // Employee のパスワードチェック
+            foreach ($employeesAdmin as $employeeAdmin) {
+                if (Hash::check($validated['new_password'], $employeeAdmin->password)) {
+                    return redirect()->back()
+                        ->withErrors(['new_password' => 'このパスワードは使用できません。（他の従業員のパスワードと同じです）'])
+                        ->withInput();
+                }
+            }
+        }
+        $EmployeeAdmin = Employee::where('email', $request->mail)->first();
+        if ($EmployeeAdmin) {
+            // 関連する Employee を取得
+            $employeesAdmin = Employee::where('company_id', $EmployeeAdmin->company_id)
+            ->where('email','!=',$request->mail)->get();
+            // dd($employees);
+    
+            // Employee のパスワードチェック
+            foreach ($employeesAdmin as $employeeAdmin) {
+                if (Hash::check($validated['new_password'], $employeeAdmin->password)) {
+                    return redirect()->back()
+                        ->withErrors(['new_password' => 'このパスワードは使用できません。（他の従業員のパスワードと同じです）'])
+                        ->withInput();
+                }
+            }
+            $user = User::where('id', $employeeAdmin->company_id)->first();
+    
+            // User のパスワードチェック
+            if (Hash::check($validated['new_password'], $user->password)) {
+                return redirect()->back()
+                    ->withErrors(['new_password' => 'このパスワードは使用できません。（他の従業員のパスワードと同じです）'])
+                    ->withInput();
+            }
+        }
     
         if ($admin) {
             // 新しいパスワードをハッシュ化して保存
