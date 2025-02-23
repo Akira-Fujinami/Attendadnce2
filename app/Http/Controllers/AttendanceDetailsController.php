@@ -18,6 +18,7 @@ class AttendanceDetailsController extends Controller
             ->where('company_id', $companyId)
             ->where('date', $date)
             ->where('deleted', 0)
+            ->where('status', '!=', 'rejected')
             ->orderBy('minutes', 'asc')
             ->get();
         $employee = Employee::find($employeeId);
@@ -63,6 +64,7 @@ class AttendanceDetailsController extends Controller
         ->where('date', $request->date)
         ->whereIn('adit_item', ['work_start', 'work_end'])
         ->where('status', 'approved')
+        ->where('deleted', 0)
         ->pluck('adit_item') // `adit_item` のみ取得
         ->toArray();
 

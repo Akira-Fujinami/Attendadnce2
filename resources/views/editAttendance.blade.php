@@ -335,7 +335,7 @@
                 <tr>
                     <th>項目</th>
                     <th>確定済みの打刻</th>
-                    <th>修正後</th>
+                    <th>未承認の打刻</th>
                 </tr>
             </thead>
             <tbody>

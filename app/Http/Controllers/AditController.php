@@ -26,7 +26,7 @@ class AditController extends Controller
             ->where('company_id', $user->company_id)
             ->where('status', 'approved')
             ->where('deleted', 0)
-            ->orderBy('minutes', 'desc') // 最新順にソート
+            ->orderBy('created_at', 'desc') // 最新順にソート
             ->first();
         $status = null;
         if ($latestAdit) {
@@ -48,7 +48,6 @@ class AditController extends Controller
         $aditRecords = Adit::whereBetween('date', [$lastMonthStart, $yesterday])
             ->where('employee_id', $user->id)
             ->where('company_id', $user->company_id)
-            ->where('status', '!=', 'rejected')
             ->get()
             ->groupBy('date');
 
