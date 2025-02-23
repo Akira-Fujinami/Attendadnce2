@@ -93,6 +93,7 @@ class AditController extends Controller
             ->where('employee_id', $user->id)
             ->where('company_id', $user->company_id)
             ->where('status', 'rejected')
+            ->where('confirm', 0)
             ->orderBy('created_at', 'desc') // 最新のレコードを取得しやすいようにソート
             ->get()
             ->groupBy('adit_item') // adit_itemごとにグループ化
@@ -286,6 +287,37 @@ class AditController extends Controller
         }
     
         return null; // エラーなし
+    }
+    
+    public function confirmAdit(Request $request)
+    {
+        try {
+            // ログ出力でリクエストデータを確認
+            \Log::info("確認済みリクエスト: ", $request->all());
+    
+            // レコードを取得
+            $aditRecords = Adit::where('date', $request->date)
+                ->where('employee_id', $request->employeeId)
+                ->where('company_id', Auth::User()->company_id)
+                ->where('status', 'rejected')
+                ->get();
+    
+            if ($aditRecords->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'データが見つかりません'], 404);
+            }
+    
+            // レコードの更新
+            Adit::where('date', $request->date)
+                ->where('employee_id', $request->employeeId)
+                ->where('company_id', Auth::User()->company_id)
+                ->where('status', 'rejected')
+                ->update(['confirm' => true]);
+    
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            \Log::error("エラー発生: " . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
     
 

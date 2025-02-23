@@ -61,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
 });
 Route::middleware(['auth:employees', 'App\Http\Middleware\SessionTimeout'])->group(function () {
     Route::get('/adit', [AditController::class, 'index'])->name('adit');
+    Route::post('/confirmAdit', [AditController::class, 'confirmAdit'])->name('confirmAdit');
     Route::get('/editAttendance', [AttendanceController::class, 'editAttendance'])->name('editAttendance');
     Route::post('/adit', [AditController::class, 'adit'])->name('adit');
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');

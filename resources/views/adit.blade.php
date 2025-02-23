@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>出勤管理システム</title>
     <style>
@@ -219,16 +220,27 @@
     @if (!empty($data['rejected']))
         @foreach($data['rejected'] as $rejected)
             <li>
-                <a href="{{ route('editAttendance', ['date' => $rejected['date'], 'employeeId' => Auth::User()->id]) }}" class="error-link">
+                <a href="#" class="error-link rejected-record" 
+                    data-date="{{ $rejected['date'] }}" 
+                    data-employee-id="{{ Auth::User()->id }}"
+                    data-url-edit="{{ route('editAttendance', ['date' => $rejected['date'], 'employeeId' => Auth::User()->id]) }}"
+                    data-url-confirm="{{ route('confirmAdit', ['date' => $rejected['date'], 'employeeId' => Auth::User()->id]) }}">
+                    
                     {{ $rejected['date'] }}:
                     <span class="error-message">
                         @foreach ($rejected['records'] as $record)
-                            {{ $record['time'] }}（{{ ($record['type']) }}）
+                            {{ $record['time'] }}（{{ $record['type'] }}）
                         @endforeach
                         の打刻が却下されました
                     </span>
                 </a>
             </li>
+            <div id="confirmDialog" class="modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);">
+                <p>この打刻の処理を選択してください</p>
+                <button id="editButton" class="button button-blue">編集する</button>
+                <button id="confirmButton" class="button button-green">確認済みにする</button>
+                <button id="closeDialog" class="button button-red">キャンセル</button>
+            </div>
         @endforeach
     @endif
 
@@ -256,6 +268,75 @@
 
         // 毎秒時間を更新
         setInterval(updateTime, 1000);
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const rejectedRecords = document.querySelectorAll('.rejected-record');
+            const confirmDialog = document.getElementById('confirmDialog');
+            const editButton = document.getElementById('editButton');
+            const confirmButton = document.getElementById('confirmButton');
+            const closeDialog = document.getElementById('closeDialog');
+
+            let selectedUrlEdit = "";
+            let selectedUrlConfirm = "";
+            let selectedRecord = null;
+
+            rejectedRecords.forEach(record => {
+                record.addEventListener("click", function(event) {
+                    event.preventDefault();
+                    selectedUrlEdit = this.getAttribute("data-url-edit");
+                    selectedUrlConfirm = this.getAttribute("data-url-confirm");
+                    selectedRecord = this; // クリックした要素を保存
+                    confirmDialog.style.display = "block";
+                });
+            });
+
+            // 「編集する」ボタンがクリックされた場合
+            editButton.addEventListener("click", function() {
+                window.location.href = selectedUrlEdit;
+            });
+
+            // 「確認済みにする」ボタンがクリックされた場合
+            confirmButton.addEventListener("click", function() {
+                let formData = new FormData();
+                formData.append("date", selectedRecord.getAttribute("data-date"));
+                formData.append("employeeId", selectedRecord.getAttribute("data-employee-id"));
+                formData.append("_token", document.querySelector('meta[name="csrf-token"]').getAttribute("content")); // CSRFトークンを追加
+                console.log(formData);
+
+                fetch(selectedUrlConfirm, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        date: selectedRecord.getAttribute("data-date"),
+                        employeeId: selectedRecord.getAttribute("data-employee-id")
+                    })
+                })
+
+                .then(response => response.json()) 
+                .then(data => {
+                    if (data.success) {
+                        alert("確認済みにしました！");
+                        window.location.reload();
+                    } else {
+                        alert("エラー: " + (data.message || "不明なエラー"));
+                    }
+                })
+                .catch(error => {
+                    console.error("エラー:", error);
+                    alert("サーバーエラーが発生しました。\n" + error.message);
+                });
+
+                confirmDialog.style.display = "none";
+            });
+
+            // 「キャンセル」ボタンがクリックされた場合
+            closeDialog.addEventListener("click", function() {
+                confirmDialog.style.display = "none";
+            });
+        });
     </script>
 </body>
 </html>

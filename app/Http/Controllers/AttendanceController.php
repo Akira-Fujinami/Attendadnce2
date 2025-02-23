@@ -282,7 +282,7 @@ class AttendanceController extends Controller
                     ->where('company_id', Auth::User()->company_id)
                     ->first();
 
-        if ($recruit && Carbon::parse($recruit->created_at)->gt(Carbon::parse($date))) {
+        if ($recruit && Carbon::parse($recruit->created_at)->toDateString() > Carbon::parse($date)->toDateString()) {
             return view('editAttendance', [
                 'disable' => 1,
                 'year' => $year,
