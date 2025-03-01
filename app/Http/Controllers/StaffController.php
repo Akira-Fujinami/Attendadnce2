@@ -177,7 +177,7 @@ class StaffController extends Controller
                         ->withInput();
                 }
             }
-            $user = User::where('id', $employeeAdmin->company_id)->first();
+            $user = User::where('id', Auth::User()->id)->first();
     
             // User のパスワードチェック
             if (Hash::check($validatedData['password'], $user->password)) {
