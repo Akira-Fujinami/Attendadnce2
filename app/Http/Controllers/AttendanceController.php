@@ -443,10 +443,12 @@ class AttendanceController extends Controller
                 ->selectRaw('SUM(total_work_hours) as totalWorkHours, COUNT(date) as attendanceDays, SUM(salary) as totalSalary')
                 ->first();
             // 総勤務時間の計算
-            $workMinutes = $summary->totalWorkHours % 60;     // 分部分
-            
-            // 表示用
-            $formattedWorkHours = sprintf('%02d時間%02d分', $summary->totalWorkHours, $workMinutes);
+            $totalHoursDecimal = $summary->totalWorkHours ?? 0; // 例: 8.12
+            $hours = floor($totalHoursDecimal); // 時間部分 (整数)
+            $minutes = round(($totalHoursDecimal - $hours) * 60); // 分部分 (小数を60進数に変換)
+        
+            // 表示用フォーマット
+            $formattedWorkHours = sprintf('%02d時間%02d分', $hours, $minutes);
             $salary = $summary->totalSalary ?? 0;
             $totalSalary += $salary;
     

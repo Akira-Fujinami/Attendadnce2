@@ -38,12 +38,19 @@ class DailyAttendanceController extends Controller
                 ->selectRaw('total_work_hours, total_break_hours, salary')
                 ->first();
             // 総勤務時間の計算
-            $workMinutes = $summary->total_work_hours % 60;     // 分部分
-            $breakMinutes = $summary->total_break_hours % 60; 
-            
-            // 表示用
-            $formattedWorkHours = sprintf('%02d時間%02d分', $summary->total_work_hours, $workMinutes);
-            $formattedBreakHours = sprintf('%02d時間%02d分', $summary->total_break_hours, $breakMinutes);
+            $totalHoursDecimalWork = $summary->total_work_hours ?? 0; // 例: 8.12
+            $workHours = floor($totalHoursDecimalWork); // 時間部分 (整数)
+            $workMinutes = round(($totalHoursDecimalWork - $workHours) * 60); // 分部分 (小数を60進数に変換)
+        
+            // 表示用フォーマット
+            $formattedWorkHours = sprintf('%02d時間%02d分', $workHours, $workMinutes);
+
+            $totalHoursDecimalBreak = $summary->total_break_hours ?? 0; // 例: 8.12
+            $breakHours = floor($totalHoursDecimalBreak); // 時間部分 (整数)
+            $breakMinutes = round(($totalHoursDecimalBreak - $breakHours) * 60); // 分部分 (小数を60進数に変換)
+        
+            // 表示用フォーマット
+            $formattedBreakHours = sprintf('%02d時間%02d分', $breakHours, $breakMinutes);
 
             $salary = $summary->salary ?? 0;
             $totalSalary += $salary;
