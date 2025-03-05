@@ -150,6 +150,13 @@
             transform: translateY(0); /* 元に戻る */
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* 影を小さくする */
         }
+        @media screen and (max-width: 768px) {
+            table {
+                display: block; /* テーブル全体をブロック表示 */
+                overflow-x: auto; /* 横スクロールを有効に */
+                white-space: nowrap; /* 折り返しを防ぐ */
+            }
+        }
     </style>
 </head>
 <body>

@@ -123,6 +123,28 @@
         .delete-btn:hover {
             background-color: #c82333;
         }
+
+        @media screen and (max-width: 768px) {
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .action-buttons {
+                flex-wrap: nowrap; /* スマホでも横並びを維持 */
+                justify-content: space-between;
+            }
+
+            .save-btn, .delete-btn {
+                flex: 1;
+                max-width: 48%; /* 画面幅の約半分 */
+                min-width: 90px; /* 削れないように最小幅を確保 */
+                font-size: 14px; /* 文字の視認性を維持 */
+                white-space: nowrap; /* 文字の折り返しを防ぐ */
+            }
+        }
+
+
     </style>
     <script>
         function confirmDelete() {

@@ -96,6 +96,15 @@
         .back-button:hover {
             background-color: #0056b3;
         }
+        /* スマホ版でテーブルを横スクロール可能にする */
+        @media screen and (max-width: 768px) {
+            table {
+                display: block; /* テーブル全体をブロック表示 */
+                overflow-x: auto; /* 横スクロールを有効に */
+                white-space: nowrap; /* 折り返しを防ぐ */
+            }
+        }
+
     </style>
 </head>
 <body>

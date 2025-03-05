@@ -177,6 +177,37 @@
             cursor: not-allowed;
             opacity: 0.65;
         }
+
+        @media screen and (max-width: 768px) {
+            .month-navigation {
+                flex-direction: column;
+            }
+
+            .nav-button {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .button {
+                width: 100%; /* スマホでは全幅 */
+                max-width: 250px;
+            }
+
+            h1 {
+                font-size: 1.5em; /* 文字を小さく */
+            }
+        }
+        @media screen and (max-width: 768px) {
+            table {
+                display: block; /* テーブル全体をブロック表示 */
+                overflow-x: auto; /* 横スクロールを有効に */
+                white-space: nowrap; /* 折り返しを防ぐ */
+            }
+        }
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -254,6 +285,9 @@
 
                             $breakHours = floor($breakMinutes / 60) + ($breakMinutes % 60) / 100; // 時間に変換
                         }
+                        $weekdays = ['Sun' => '日', 'Mon' => '月', 'Tue' => '火', 'Wed' => '水', 'Thu' => '木', 'Fri' => '金', 'Sat' => '土'];
+                        $parsedDate = \Carbon\Carbon::parse($date);
+                        $formattedDate = $parsedDate->format('n/j') . ' (' . $weekdays[$parsedDate->format('D')] . ')';
                     @endphp
                     <tr @if ($recordsForDate && $recordsForDate['error'])
                             class="error-row"
@@ -271,7 +305,7 @@
                                 承認されると時刻が反映されます
                             </span>
                         @endif
-                        <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $date }}</a>
+                        <a href="{{ route('editAttendance', ['date' => $date, 'employeeId' => $employeeId]) }}" class="date-link">{{ $formattedDate }}</a>
                     </td>
                     <td>
                         @if ($recordsForDate)

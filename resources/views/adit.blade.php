@@ -139,6 +139,39 @@
             cursor: not-allowed;
             opacity: 0.65;
         }
+        @media screen and (max-width: 768px) {
+            .navigation, .logout {
+                position: static; /* 絶対配置を解除 */
+                text-align: center;
+                margin-bottom: 10px;
+            }
+
+            .navigation .button, .logout .button {
+                width: 90%; /* 画面幅いっぱいに調整 */
+                display: block;
+                margin: 5px auto; /* 上下に間隔を確保 */
+            }
+
+            .button-group {
+                display: flex;
+                flex-wrap: wrap; /* 必要に応じて折り返し */
+                justify-content: center; /* ボタンを中央揃え */
+                gap: 10px;
+            }
+
+            .button {
+                width: 45%; /* 画面幅の約半分 */
+                padding: 12px;
+                font-size: 1em;
+                text-align: center;
+            }
+
+            .button[disabled] {
+                opacity: 0.65;
+            }
+        }
+
+
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function() {

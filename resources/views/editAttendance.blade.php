@@ -290,6 +290,36 @@
             font-weight: bold;
         }
 
+        @media screen and (max-width: 768px) {
+            .header-container {
+                flex-wrap: wrap; /* スマホでは折り返す */
+                justify-content: center; /* ボタンが端に寄りすぎないように */
+                gap: 10px;
+            }
+
+            .nav-button {
+                min-width: auto;
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+
+            .header-container h2 {
+                font-size: 1.2em;
+            }
+
+            .header-container h3 {
+                font-size: 1em;
+            }
+            table {
+                display: block; /* テーブル全体をブロック表示 */
+                overflow-x: auto; /* 横スクロールを有効に */
+                white-space: nowrap; /* 折り返しを防ぐ */
+            }
+            
+            th, td {
+                min-width: 150px; /* セルの最小幅を設定して、スクロールをスムーズにする */
+            }
+        }
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function () {

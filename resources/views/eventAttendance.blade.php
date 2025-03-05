@@ -136,6 +136,23 @@
             border-color: #007bff;
             box-shadow: 0px 0px 5px rgba(0, 123, 255, 0.5);
         }
+        @media screen and (max-width: 768px) {
+            .excel-export-form {
+                position: relative; /* 絶対位置を解除 */
+                top: auto;
+                left: auto;
+                margin-bottom: 10px;
+                text-align: center; /* ボタンを中央揃え */
+            }
+
+            .excel-export-button {
+                width: 100%; /* スマホ画面ではボタンを横幅いっぱいに */
+            }
+        }
+
+
+
+
     </style>
 </head>
 <body>

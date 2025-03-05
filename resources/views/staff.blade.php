@@ -187,6 +187,26 @@
             opacity: 0.65;
         }
 
+        @media (max-width: 768px) {
+            .top-links {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 90%;
+            }
+        }
+        @media screen and (max-width: 768px) {
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            td:nth-child(3) { /* 勤務状況カラム */
+                min-width: 80px; /* 最小幅を確保 */
+                text-align: center;
+            }
+        }
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function() {

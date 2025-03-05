@@ -228,6 +228,16 @@
             cursor: not-allowed;
             opacity: 0.65;
         }
+        @media (max-width: 768px) {
+            .top-links {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 80%;
+            }
+        }
 
     </style>
     <script>

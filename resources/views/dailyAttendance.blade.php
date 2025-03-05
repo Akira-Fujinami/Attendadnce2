@@ -116,6 +116,20 @@
             transform: translateY(0); /* 元に戻る */
             box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* 影を小さくする */
         }
+        @media screen and (max-width: 768px) {
+            table {
+                display: block; /* テーブル全体をブロック表示 */
+                overflow-x: auto; /* 横スクロールを有効に */
+                white-space: nowrap; /* 折り返しを防ぐ */
+            }
+            h1 {
+                font-size: 1.3em; /* フォントサイズを少し小さくする */
+                padding: 0 10px; /* 余白を追加 */
+                max-width: 100%; /* 親要素に収める */
+                text-align: center; /* 中央揃え */
+                white-space: normal; /* 必要に応じて改行 */
+            }
+        }
     </style>
 </head>
 <body>

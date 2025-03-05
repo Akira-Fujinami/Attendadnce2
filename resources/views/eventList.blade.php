@@ -100,6 +100,52 @@
             display: flex;
             align-items: center;
         }
+        .btn-group {
+            display: flex;
+            justify-content: center; /* ボタンを中央に配置 */
+            gap: 10px; /* ボタン間の余白 */
+            flex-wrap: nowrap; /* 折り返し禁止 */
+            width: 100%;
+        }
+
+
+        @media screen and (max-width: 768px) {
+            .btn-container {
+                width: 100%;
+                text-align: right;
+                margin-top: 10px;
+            }
+
+            .btn-container {
+                display: flex;
+                justify-content: flex-end;
+                width: 100%;
+            }
+            .btn-group {
+                flex-wrap: nowrap; /* 折り返し禁止 */
+                justify-content: space-between; /* 均等配置 */
+            }
+            .btn {
+                flex: 1;
+                max-width: 48%; /* 画面幅の約半分に調整 */
+                text-align: center;
+                white-space: nowrap; /* テキスト折り返し禁止 */
+                font-size: 13px; /* フォントサイズを小さく調整 */
+            }
+            .event-item {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .delete-btn {
+                width: 100%;
+                max-width: 120px;
+                padding: 10px 15px;
+                font-size: 14px;
+                text-align: center;
+            }
+        }
 
     </style>
     <script>
@@ -114,13 +160,10 @@
     <div class="container">
         <h1>イベント一覧</h1>
 
-        <a href="{{ route('events.create') }}" class="btn">
-            ➕ イベントを追加
-        </a>
-        <a href="{{ route('events.show') }}" class="btn">
-            🎉 イベント出勤簿
-        </a>
-
+        <div class="btn-group">
+            <a href="{{ route('events.create') }}" class="btn">➕ イベントを追加</a>
+            <a href="{{ route('events.show') }}" class="btn">🎉 イベント出勤簿</a>
+        </div>
         @if ($events->isEmpty())
             <p style="text-align: center; color: #777;">イベントが登録されていません。</p>
         @else
