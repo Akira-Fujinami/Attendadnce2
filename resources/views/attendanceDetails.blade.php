@@ -155,7 +155,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>打刻詳細: {{ $date }}</h1>
+        @php
+            $weekdays = ['Sun' => '日', 'Mon' => '月', 'Tue' => '火', 'Wed' => '水', 'Thu' => '木', 'Fri' => '金', 'Sat' => '土'];
+            $parsedDate = \Carbon\Carbon::parse($date);
+            $Date = $parsedDate->format('Y/n/j') . ' (' . $weekdays[$parsedDate->format('D')] . ')';
+        @endphp
+        <h1>{{ $Date }}</h1>
 
         <table>
             <thead>

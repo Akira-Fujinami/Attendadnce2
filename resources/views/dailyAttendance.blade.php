@@ -134,7 +134,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>{{ $selectedDate }}の日次打刻データ</h1>
+        @php
+            $weekdays = ['Sun' => '日', 'Mon' => '月', 'Tue' => '火', 'Wed' => '水', 'Thu' => '木', 'Fri' => '金', 'Sat' => '土'];
+            $parsedDate = \Carbon\Carbon::parse($selectedDate);
+            $formattedDate = $parsedDate->format('Y/n/j') . ' (' . $weekdays[$parsedDate->format('D')] . ')';
+        @endphp
+        <h1>{{ $formattedDate }}</h1>
         <a href="{{ route('dailyAttendance.export', ['companyId' => Auth::user()->id, 'date' => $selectedDate]) }}" class="excel-export-button">
             エクセルを出力
         </a>

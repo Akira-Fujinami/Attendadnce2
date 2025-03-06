@@ -169,11 +169,18 @@
         @else
             <ul class="event-list">
                 @foreach ($events as $event)
+                    @php
+                        $weekdays = ['Sun' => '日', 'Mon' => '月', 'Tue' => '火', 'Wed' => '水', 'Thu' => '木', 'Fri' => '金', 'Sat' => '土'];
+                        $parsedFromDate = \Carbon\Carbon::parse($event->fromDate);
+                        $fromDate = $parsedFromDate->format('Y/n/j') . ' (' . $weekdays[$parsedFromDate->format('D')] . ')';
+                        $parsedToDate = \Carbon\Carbon::parse($event->toDate);
+                        $toDate = $parsedToDate->format('Y/n/j') . ' (' . $weekdays[$parsedToDate->format('D')] . ')';
+                    @endphp
                     <li class="event-item">
                         <div class="event-details">
                             <div class="event-header">
                                 <span class="event-name">{{ $event->name }}</span>
-                                <span class="event-dates">{{ $event->fromDate }} ～ {{ $event->toDate }}</span>
+                                <span class="event-dates">{{ $fromDate }} ～ {{ $toDate }}</span>
                             </div>
                             <div class="event-description">
                                 {{ $event->description ?? '説明がありません' }}

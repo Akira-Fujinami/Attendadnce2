@@ -122,10 +122,10 @@
 
         .dropdown select {
             width: 100%;
-            padding: 10px;
+            padding: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 1em;
+            font-size: 0.9em;
             background-color: white;
             cursor: pointer;
         }
@@ -138,21 +138,30 @@
         }
         @media screen and (max-width: 768px) {
             .excel-export-form {
-                position: relative; /* 絶対位置を解除 */
+                position: relative;
                 top: auto;
                 left: auto;
                 margin-bottom: 10px;
-                text-align: center; /* ボタンを中央揃え */
+                text-align: center;
             }
 
             .excel-export-button {
-                width: 100%; /* スマホ画面ではボタンを横幅いっぱいに */
+                width: 100%;
             }
+            .button-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
         }
-
-
-
-
     </style>
 </head>
 <body>
@@ -182,8 +191,15 @@
                 <select name="event_id" onchange="this.form.submit()">
                     <option value="" disabled selected>イベントを選択してください</option>
                     @foreach ($allEvents as $ev)
+                        @php
+                            $weekdays = ['Sun' => '日', 'Mon' => '月', 'Tue' => '火', 'Wed' => '水', 'Thu' => '木', 'Fri' => '金', 'Sat' => '土'];
+                            $parsedFromDate = \Carbon\Carbon::parse($ev->fromDate);
+                            $fromDate = $parsedFromDate->format('Y/n/j') . ' (' . $weekdays[$parsedFromDate->format('D')] . ')';
+                            $parsedToDate = \Carbon\Carbon::parse($ev->toDate);
+                            $toDate = $parsedToDate->format('Y/n/j') . ' (' . $weekdays[$parsedToDate->format('D')] . ')';
+                        @endphp
                         <option value="{{ $ev->id }}" {{ $event && $event->id == $ev->id ? 'selected' : '' }}>
-                            {{ $ev->name }} ({{ $ev->fromDate }} ～ {{ $ev->toDate }})
+                            {{ $ev->name }} {{ $fromDate }} ～ {{ $toDate }}
                         </option>
                     @endforeach
                 </select>

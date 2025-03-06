@@ -232,6 +232,7 @@
             .top-links {
                 flex-direction: column;
                 align-items: center;
+                margin-right: 10%;
             }
 
             .btn {
