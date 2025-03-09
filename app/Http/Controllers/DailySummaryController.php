@@ -11,7 +11,7 @@ use Carbon\Carbon;
 
 class DailySummaryController extends Controller
 {
-    public static function summary($companyId, $employeeId, $date) {
+    public static function summary($companyId, $employeeId, $eventId, $date) {
         $date = date('Y-m-d', strtotime($date));
         $dailySummary = DailySummary::firstOrCreate(
             [
@@ -22,6 +22,7 @@ class DailySummaryController extends Controller
             [
                 'company_id' => $companyId,
                 'employee_id' => $employeeId,
+                'event_id' => $eventId,
                 'date' => $date,
                 'total_work_hours' => 0,
                 'total_break_hours' => 0,

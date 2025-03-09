@@ -192,12 +192,22 @@
     </div>
 
     <!-- ログアウトボタン -->
+    @if(empty($data['event']))
     <div class="logout">
         <form action="{{ route('logout') }}" method="POST" id="logout-form">
             @csrf
             <button type="submit" class="button" id="logout-btn">ログアウト</button>
         </form>
     </div>
+    @else
+    <div class="logout">
+        <form action="{{ route('qr_logout') }}" method="POST" id="logout-form">
+            @csrf
+            <input type="hidden" name="event_id" value="{{ $data['event']->id }}">
+            <button type="submit" class="button" id="logout-btn">ログアウト</button>
+        </form>
+    </div>
+    @endif
 
     <div class="container">
         @if($data['latestAdit'])
@@ -205,7 +215,7 @@
                 ⚠ 打刻が完了したら、ログアウトして安全に終了してください。
             </div>
         @endif
-        <h1>{{ Auth::user()->name }} さん</h1>
+        <h1>{{ Auth::user()->name }} さん  @if (session('event')) @ {{ session('event') }} @endif</h1>
         <div class="time-display" id="current-time">
             <!-- 時間がここに表示されます -->
         </div>
@@ -229,6 +239,9 @@
         <input type="hidden" name="company_id" value="{{ Auth::user()->company_id }}">
         <input type="hidden" name="wage" value="{{ Auth::user()->hourly_wage }}">
         <input type="hidden" name="transportation" value="{{ Auth::user()->transportation_fee }}">
+        @if(!empty($data['event']))
+            <input type="hidden" name="event" value="{{ $data['event']->id }}">
+        @endif
     </form>
     @if(!empty($data['errors']))
         @foreach($data['errors'] as $error)

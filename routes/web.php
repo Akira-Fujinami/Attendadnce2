@@ -11,6 +11,11 @@ use App\Http\Controllers\AppliedAditController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\AttendanceDetailsController;
 use App\Http\Controllers\DailyAttendanceController;
+use App\Http\Controllers\QrCodeController;
+use App\Http\Controllers\QrLoginController;
+use App\Http\Controllers\AditQrController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('welcome');
@@ -58,6 +63,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dailyAttendance/export', [DailyAttendanceController::class, 'exportDailyAttendance'])->name('dailyAttendance.export');
     Route::get('/staffCreate', function () { return view('staffCreate');})->name('staffCreate');
     Route::post('/employeeCreate', [StaffController::class, 'create'])->name('employeeCreate');
+    Route::get('/events/{event}/qr', [QrCodeController::class, 'show'])->name('events.qr');   
+    Route::get('/qr/download/{event}', [QrCodeController::class, 'download'])->name('qr.download');
 });
 Route::middleware(['auth:employees', 'App\Http\Middleware\SessionTimeout'])->group(function () {
     Route::get('/adit', [AditController::class, 'index'])->name('adit');
@@ -68,5 +75,11 @@ Route::middleware(['auth:employees', 'App\Http\Middleware\SessionTimeout'])->gro
     Route::post('/updateAttendance', [AttendanceController::class, 'updateAttendance'])->name('updateAttendance');
     Route::post('/deleteAttendance', [AttendanceController::class, 'deleteAttendance'])->name('deleteAttendance');
 });
+Route::middleware(['auth:employees'])->group(function () {
+    Route::get('/adit_qr/{event}', [AditQrController::class, 'index'])->name('adit_qr');
+});
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::post('/qr_logout', [QRLoginController::class, 'logout'])->name('qr_logout');
 Route::post('/resetPassword', [LoginController::class, 'resetPassword'])->name('password.reset');
+Route::get('/qr/login', [QrLoginController::class, 'showLoginForm'])->name('qr.login');
+Route::post('/qr/login', [QrLoginController::class, 'login'])->name('qr.login.post');

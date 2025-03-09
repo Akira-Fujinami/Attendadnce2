@@ -42,6 +42,7 @@ class AppliedAditController extends Controller
                                         'adit_id' => $record->before_adit_id,
                                         'minutes' => $record->minutes,
                                         'adit_item' => $record->adit_item,
+                                        'event_id' => $record->event_id,
                                         'previous_time' => $previous_time,
                                         'current_time' => $current_time,
                                         'deleted' => $record->deleted,
@@ -106,7 +107,7 @@ class AppliedAditController extends Controller
             $approvedAdit->update(['status' => 'rejected']);
         }
 
-        DailySummaryController::summary($request->company_id, $request->employee_id, $request->date);
+        DailySummaryController::summary($request->company_id, $request->employee_id, $request->event_id, $request->date);
 
         return redirect()->route('appliedAdit', ['companyId' => Auth::user()->id]);
     }

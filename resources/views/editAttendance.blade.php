@@ -278,6 +278,9 @@
             font-size: 1.2em;
             color: #333;
         }
+        h4 {
+            text-align: center;
+        }
 
         .warning-message {
             text-align: center;
@@ -290,6 +293,17 @@
             font-weight: bold;
         }
 
+        .employee-info {
+            display: flex;
+            flex-direction: column; /* 縦並びにする */
+            align-items: center; /* 中央揃え */
+        }
+
+        .event-info {
+            font-size: 1em;
+            color: #333;
+            margin-top: 15px; /* 名前とイベントの間に余白を追加 */
+        }
         @media screen and (max-width: 768px) {
             .header-container {
                 flex-wrap: wrap; /* スマホでは折り返す */
@@ -339,10 +353,13 @@
                 出勤簿へ遷移
             </button>
             <h2>{{ $year }}年 {{ $month }}月 {{ $day }}日</h2>
-            <h3>{{$name}}さん<h3>
+            <h3>{{ $name }}さん</h3>
         </div>
 
         <h1>打刻修正画面</h1>
+        @if ($date == now()->toDateString())
+            <h4>@ {{session('event')}}</h4>
+        @endif
         @if(!$disable)
             @if ($pending)
                 <div class="warning-message">

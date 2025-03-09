@@ -134,12 +134,13 @@ class AditController extends Controller
         Adit::create([
             'company_id' => $request->company_id,
             'employee_id' => $request->employee_id,
+            'event_id' => $request->event,
             'date' => now()->format('Y-m-d'),
             'minutes' => now()->format('Y-m-d H:i'),
             'adit_item' => $request->adit_item,
             'status' => 'approved',
         ]);
-        DailySummaryController::summary($request->company_id, $request->employee_id, now()->format('Y-m-d'));
+        DailySummaryController::summary($request->company_id, $request->employee_id, $request->event, now()->format('Y-m-d'));
         return redirect()->route('adit');
     }
 

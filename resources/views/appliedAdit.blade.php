@@ -174,6 +174,7 @@
                                     <input type="hidden" name="before_adit_id" value="{{ $record['adit_id'] }}">
                                     <input type="hidden" name="wage" value="{{ $record['hourly_wage'] }}">
                                     <input type="hidden" name="transportation" value="{{ $record['transportation_fee'] }}">
+                                    <input type="hidden" name="event_id" value="{{ $record['event_id'] }}">
                                     <button type="submit" class="btn btn-approve">承認</button>
                                 </form>
                                 @if($currentStatus != 'rejected')

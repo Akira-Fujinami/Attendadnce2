@@ -226,6 +226,11 @@
     <div class="return-button">
         <button onclick="location.href='{{ route('adit') }}'">打刻画面に戻る</button>
     </div>
+    @if($event)
+    <div class="return-button">
+        <button onclick="location.href='{{ route('adit_qr') }}'">打刻画面に戻る</button>
+    </div>
+    @endif
         <!-- ログアウトボタン -->
     <div class="logout">
         <form action="{{ route('logout') }}" method="POST" id="logout-form">

@@ -137,6 +137,7 @@ class AttendanceController extends Controller
             'totalBreakHours' => $formattedBreakHours,
             'currentYear' => $year,
             'currentMonth' => $month,
+            'event' => $request->event_id,
         ]);
     }
 

@@ -41,10 +41,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .event-details {
             flex-grow: 1;
+            min-width: 60%;
         }
 
         .event-header {
@@ -79,7 +81,7 @@
             border-radius: 5px;
             font-size: 1em;
             transition: background-color 0.3s ease;
-            margin-right: 10px;
+            text-align: center;
         }
 
         .btn:hover {
@@ -96,16 +98,27 @@
             background-color: #c82333;
         }
 
+        .qr-btn {
+            background-color: #28a745;
+        }
+
+        .qr-btn:hover {
+            background-color: #218838;
+        }
+
         .btn-container {
             display: flex;
+            gap: 10px;
             align-items: center;
         }
+
         .btn-group {
             display: flex;
-            justify-content: center; /* ボタンを中央に配置 */
-            gap: 10px; /* ボタン間の余白 */
-            flex-wrap: nowrap; /* 折り返し禁止 */
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
             width: 100%;
+            margin-bottom: 20px;
         }
 
 
@@ -187,6 +200,7 @@
                             </div>
                         </div>
                         <div class="btn-container">
+                            <a href="{{ route('events.qr', ['event' => $event->id]) }}" class="btn qr-btn">📷 QRコード表示</a>
                             <form id="delete-form-{{ $event->id }}" method="POST" action="{{ route('events.delete', ['event' => $event->id]) }}">
                                 @csrf
                                 <button type="button" class="btn delete-btn" onclick="confirmDelete({{ $event->id }})">🗑 削除</button>
