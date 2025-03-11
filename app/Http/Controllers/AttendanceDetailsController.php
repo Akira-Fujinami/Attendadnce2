@@ -6,6 +6,7 @@ use App\Models\Adit;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Models\DailySummary;
+use App\Models\Event;
 use Carbon\Carbon;
 use Auth;
 
@@ -21,6 +22,9 @@ class AttendanceDetailsController extends Controller
             ->where('status', '!=', 'rejected')
             ->orderBy('minutes', 'asc')
             ->get();
+        $eventId = $aditRecords->pluck('event_id')->first() ?? '';
+        $eventSelected = Event::where('id', $eventId)
+            ->first();
         $employee = Employee::find($employeeId);
 
         if (!$employee || $aditRecords->isEmpty()) {
@@ -31,6 +35,7 @@ class AttendanceDetailsController extends Controller
             'date' => $date,
             'employee' => $employee,
             'aditRecords' => $aditRecords,
+            'eventSelected' => $eventSelected,
         ]);
     }
     public function update(Request $request, $id) {

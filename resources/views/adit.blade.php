@@ -192,18 +192,18 @@
     </div>
 
     <!-- ログアウトボタン -->
-    @if(empty($data['event']))
+    @if (session('event'))
     <div class="logout">
-        <form action="{{ route('logout') }}" method="POST" id="logout-form">
+        <form action="{{ route('qr_logout') }}" method="POST" id="logout-form">
             @csrf
+            <input type="hidden" name="event_id" value="{{ session('evId') }}">
             <button type="submit" class="button" id="logout-btn">ログアウト</button>
         </form>
     </div>
     @else
     <div class="logout">
-        <form action="{{ route('qr_logout') }}" method="POST" id="logout-form">
+        <form action="{{ route('logout') }}" method="POST" id="logout-form">
             @csrf
-            <input type="hidden" name="event_id" value="{{ $data['event']->id }}">
             <button type="submit" class="button" id="logout-btn">ログアウト</button>
         </form>
     </div>
@@ -239,9 +239,6 @@
         <input type="hidden" name="company_id" value="{{ Auth::user()->company_id }}">
         <input type="hidden" name="wage" value="{{ Auth::user()->hourly_wage }}">
         <input type="hidden" name="transportation" value="{{ Auth::user()->transportation_fee }}">
-        @if(!empty($data['event']))
-            <input type="hidden" name="event" value="{{ $data['event']->id }}">
-        @endif
     </form>
     @if(!empty($data['errors']))
         @foreach($data['errors'] as $error)

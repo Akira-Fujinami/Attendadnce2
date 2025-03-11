@@ -25,7 +25,8 @@ class DailyAttendanceController extends Controller
     
         $employees = Employee::join('daily_summaries', 'employees.id', '=', 'daily_summaries.employee_id')
                     ->where('employees.company_id', $request->companyId)
-                    ->select('employees.*') // 必要なら `daily_summaries.*` も追加
+                    ->where('date', $request->date)
+                    ->select('employees.*')
                     ->distinct() // 重複を防ぐ
                     ->get();
         $data = [];
@@ -62,9 +63,19 @@ class DailyAttendanceController extends Controller
                 'salary' => $summary->salary ?? 0,
             ];
         }
+        $weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+
+        $carbonDate = Carbon::parse($request->date);
+        $formattedDate = $carbonDate->format('Y/m/d') . ' (' . $weekdays[$carbonDate->dayOfWeek] . ')';
     
         // ヘッダー行を含むデータを準備
         $csvData = [];
+
+        // **先頭に「〇〇年〇〇月分の出勤簿」を追加**
+        $csvData[] = ["{$formattedDate}の出勤簿"];
+
+        // 空行を追加（見やすくするため）
+        $csvData[] = [];
         $csvData[] = ['名前', '労働時間', '休憩時間', '給与'];
     
         foreach ($data as $row) {

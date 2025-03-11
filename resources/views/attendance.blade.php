@@ -226,18 +226,16 @@
     <div class="return-button">
         <button onclick="location.href='{{ route('adit') }}'">打刻画面に戻る</button>
     </div>
-    @if($event)
-    <div class="return-button">
-        <button onclick="location.href='{{ route('adit_qr') }}'">打刻画面に戻る</button>
-    </div>
-    @endif
         <!-- ログアウトボタン -->
+    @if (session('event'))
+    @else
     <div class="logout">
         <form action="{{ route('logout') }}" method="POST" id="logout-form">
             @csrf
             <button type="submit" class="button" id="logout-btn">ログアウト</button>
         </form>
     </div>
+    @endif
     <h1>出勤簿</h1>
     <div class="month-navigation">
         <a href="{{ route('attendance', ['employee_id' => $employeeId, 'company_id' => Auth::user()->company_id, 'year' => $currentYear, 'month' => $currentMonth - 1]) }}" class="nav-button">◀ 前の月</a>

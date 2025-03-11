@@ -122,7 +122,9 @@ class EventController extends Controller
     {
         $event = Event::findorfail($request->event_id);
         // データ取得（同じロジックを再利用）
-        $employees = Employee::where('company_id', $request->company_id)->get();
+        $employees = Employee::join('daily_summaries', 'employees.id', '=', 'daily_summaries.employee_id')
+                    ->where('employees.company_id', $request->company_id)
+                    ->whereBetween('date', [$event->fromDate, $event->toDate])->get();
         $data = [];
         $totalSalary = 0;
     
@@ -155,6 +157,13 @@ class EventController extends Controller
     
         // ヘッダー行を含むデータを準備
         $csvData = [];
+
+        // **先頭に「〇〇年〇〇月分の出勤簿」を追加**
+        $csvData[] = ["{$event->name}の出勤簿"];
+
+        // 空行を追加（見やすくするため）
+        $csvData[] = [];
+
         $csvData[] = ['名前', '出勤日数', '総労働時間', '総給与'];
     
         foreach ($data as $row) {

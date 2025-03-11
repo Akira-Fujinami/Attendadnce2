@@ -24,6 +24,7 @@ class Adit extends Model
     protected $fillable = [
         'company_id',
         'employee_id',
+        'event_id',
         'date',
         'minutes',
         'adit_item',

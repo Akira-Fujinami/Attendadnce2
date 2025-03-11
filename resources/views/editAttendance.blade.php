@@ -304,6 +304,48 @@
             color: #333;
             margin-top: 15px; /* 名前とイベントの間に余白を追加 */
         }
+
+        /* セレクトボックスの外枠 */
+        .select-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            max-width: 350px; /* 必要に応じて調整 */
+            text-align: center;
+        }
+
+        /* セレクトボックスのデザイン */
+        .styled-select {
+            text-align: center;
+            text-align-last: center; /* 選択後も中央揃え */
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            font-size: 1em;
+            appearance: none; /* デフォルトのUIを削除 */
+            cursor: pointer;
+        }
+
+        /* ホバー時 */
+        .styled-select:hover {
+            border-color: #007bff;
+        }
+
+        /* フォーカス時 */
+        .styled-select:focus {
+            outline: none;
+            border-color: #0056b3;
+            box-shadow: 0px 0px 5px rgba(0, 91, 187, 0.5);
+        }
+
+        /* Chrome, Edge, Safariのオプション中央寄せ */
+        .styled-select option {
+            text-align: center;
+        }
+
+
         @media screen and (max-width: 768px) {
             .header-container {
                 flex-wrap: wrap; /* スマホでは折り返す */
@@ -344,6 +386,27 @@
                 breakForm.classList.add("show"); // 表示のみ（非表示にはしない）
             });
         });
+        document.addEventListener("DOMContentLoaded", function() {
+            const eventSelect = document.getElementById("eventSelect");
+            const hiddenEventInputs = document.querySelectorAll("input[name='event']"); // すべての `event` の hidden input を取得
+
+            if (eventSelect && hiddenEventInputs.length > 0) {
+                // 初期設定：すべての hidden input に選択された event_id を設定
+                hiddenEventInputs.forEach(input => {
+                    input.value = eventSelect.value || "{{ session('evId') }}";
+                });
+
+                // イベントが変更されたら、すべての hidden input も更新
+                eventSelect.addEventListener("change", function() {
+                    hiddenEventInputs.forEach(input => {
+                        input.value = this.value;
+                    });
+                });
+            } else {
+                console.error("イベント選択セレクトボックスまたは hidden input が見つかりません");
+            }
+        });
+
     </script>
 </head>
 <body>
@@ -357,9 +420,25 @@
         </div>
 
         <h1>打刻修正画面</h1>
-        @if ($date == now()->toDateString())
-            <h4>@ {{session('event')}}</h4>
+        <!-- イベント選択のドロップダウン -->
+        @if ($events->isNotEmpty())
+            <div class="select-container">
+                <select id="eventSelect" name="event_id" class="styled-select">
+                    @if (empty($eventSelected) && !session('evId'))
+                        <option value="" {{ session('evId') ? '' : 'selected' }}>イベントを選択してください</option>
+                    @endif
+                    @foreach ($events as $event)
+                        <option value="{{ $event->id }}" 
+                            @if (session('evId') == $event->id || (isset($eventSelected) && $eventSelected->id == $event->id)) 
+                                selected 
+                            @endif>
+                            {{ $event->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
         @endif
+
         @if(!$disable)
             @if ($pending)
                 <div class="warning-message">
@@ -460,6 +539,7 @@
                             <input type="hidden" name="date" value="{{ $date }}">
                             <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
                             <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                            <input type="hidden" id="hiddenEventId" name="event" value="">
                             <input type="hidden" name="adit_id" value="{{ isset($record['previousRecord'][0]) ? $record['previousRecord'][0]->id : '' }}">
 
                             <input type="time" name="{{ $aditItem }}"
@@ -474,6 +554,7 @@
                             <input type="hidden" name="employeeId" value="{{ $employeeId }}">
                             <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
                             <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                            <input type="hidden" id="hiddenEventId" name="event" value="">
                             <input type="hidden" name="adit_id" value="{{ isset($record['previousRecord'][0]) ? $record['previousRecord'][0]->id : '' }}">
                             <button type="submit" class="delete-btn">削除</button>
                         </form>
@@ -522,6 +603,7 @@
                             <input type="hidden" name="employeeId" value="{{ $employeeId }}">
                             <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
                             <input type="hidden" name="adit_item" value="{{ $breakRecord->adit_item }}">
+                            <input type="hidden" id="hiddenEventId" name="event" value="">
                             <input type="hidden" name="adit_id" value="{{ $breakRecord->id }}">
                             <input type="time" name="{{ $breakRecord->adit_item }}"
                                 value="{{ $breakRecord->status == 'pending' ? \Carbon\Carbon::parse($breakRecord->minutes)->format('H:i') : '' }}">
@@ -535,6 +617,7 @@
                             <input type="hidden" name="employeeId" value="{{ $employeeId }}">
                             <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
                             <input type="hidden" name="adit_item" value="{{ $breakRecord->adit_item }}">
+                            <input type="hidden" id="hiddenEventId" name="event" value="">
                             <input type="hidden" name="adit_id" value="{{ $breakRecord->id }}">
                             <button type="submit" class="delete-btn">削除</button>
                         </form>
@@ -579,6 +662,7 @@
                             <input type="hidden" name="date" value="{{ $date }}">
                             <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
                             <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                            <input type="hidden" id="hiddenEventId" name="event" value="">
                             <input type="hidden" name="adit_id" value="{{ isset($record['previousRecord'][0]) ? $record['previousRecord'][0]->id : '' }}">
                             <input type="time" name="{{ $aditItem }}"
                                 value="{{ !empty($record['currentRecord']) ? \Carbon\Carbon::parse($record['currentRecord'][0]->minutes)->format('H:i') : '' }}">
@@ -592,6 +676,7 @@
                             <input type="hidden" name="employeeId" value="{{ $employeeId }}">
                             <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
                             <input type="hidden" name="adit_item" value="{{ $aditItem }}">
+                            <input type="hidden" id="hiddenEventId" name="event" value="">
                             <input type="hidden" name="adit_id" value="{{ isset($record['previousRecord'][0]) ? $record['previousRecord'][0]->id : '' }}">
                             <button type="submit" class="delete-btn">削除</button>
                         </form>
@@ -615,6 +700,7 @@
                     <input type="hidden" name="date" value="{{ $date }}">
                     <input type="hidden" name="employeeId" value="{{ $employeeId }}">
                     <input type="hidden" name="companyId" value="{{ Auth::User()->company_id }}">
+                    <input type="hidden" id="hiddenEventId" name="event" value="">
 
                     <div class="form-group">
                         <label for="break_start">休憩開始時間:</label>

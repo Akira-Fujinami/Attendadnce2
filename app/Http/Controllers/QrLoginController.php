@@ -41,6 +41,7 @@ class QrLoginController extends Controller
                 'saved_email' => $employee->email,
                 'saved_password' => $request->input('password'),
                 'event' => Event::find($eventId)->name,
+                'evId' => Event::find($eventId)->id,
             ]);
             Auth::guard('employees')->login($employee);
             return redirect()->route('adit_qr', ['event' => $eventId])

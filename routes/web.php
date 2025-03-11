@@ -77,6 +77,11 @@ Route::middleware(['auth:employees', 'App\Http\Middleware\SessionTimeout'])->gro
 });
 Route::middleware(['auth:employees'])->group(function () {
     Route::get('/adit_qr/{event}', [AditQrController::class, 'index'])->name('adit_qr');
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
+    Route::post('/updateAttendance', [AttendanceController::class, 'updateAttendance'])->name('updateAttendance');
+    Route::post('/deleteAttendance', [AttendanceController::class, 'deleteAttendance'])->name('deleteAttendance');
+    Route::post('/confirmAdit', [AditController::class, 'confirmAdit'])->name('confirmAdit');
+    Route::get('/editAttendance', [AttendanceController::class, 'editAttendance'])->name('editAttendance');
 });
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::post('/qr_logout', [QRLoginController::class, 'logout'])->name('qr_logout');

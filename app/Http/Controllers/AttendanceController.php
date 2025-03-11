@@ -162,7 +162,13 @@ class AttendanceController extends Controller
         $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
         $totalSalary = 0;
         // 全スタッフの出勤情報を取得
-        $employees = Employee::where('company_id', $request->companyId)->where('retired', '在職中')->get();
+        $employeeIds = Employee::join('daily_summaries', 'employees.id', '=', 'daily_summaries.employee_id')
+                    ->where('employees.company_id', $request->companyId)
+                    ->whereBetween('date', [$startDate, $endDate]) 
+                    ->where('retired', '在職中')
+                    ->groupBy('employees.id')
+                    ->pluck('employees.id');
+        $employees = Employee::whereIn('id', $employeeIds)->get();
         foreach ($employees as $employee) {
             $summary = DailySummary::where('company_id', $request->companyId)
             ->where('employee_id', $employee->id)
@@ -301,6 +307,9 @@ class AttendanceController extends Controller
             ->whereIn('status', ['approved', 'pending'])
             ->orderBy('created_at', 'asc') // 古い順にソート
             ->get();
+        $eventId = $records->pluck('event_id')->first() ?? '';
+        $eventSelected = Event::where('id', $eventId)
+        ->first();
 
         $pendingRecords = $records->contains(function ($record) {
                 return $record->status === 'pending' && $record->deleted === 0;
@@ -317,6 +326,10 @@ class AttendanceController extends Controller
                 'currentRecord' => $filteredRecords->where('status', 'pending')->values()->all(), // 最新のレコード
             ];            
         }
+        $events = Event::where('fromDate', '<=', $date)
+               ->where('toDate', '>=', $date)
+               ->get();
+
 
         // Bladeに渡すデータ
         return view('editAttendance', [
@@ -329,6 +342,8 @@ class AttendanceController extends Controller
             'year' => $year,
             'month' => $month,
             'day' => $day,
+            'events' => $events,
+            'eventSelected' => $eventSelected,
         ]);
     }
 
@@ -380,6 +395,7 @@ class AttendanceController extends Controller
                 // 既存レコードがある場合は更新
                 foreach ($aditItems as $aditItem => $time) {
                     $attendanceRecord->update([
+                        'event_id' => $request->event,
                         'minutes' => \Carbon\Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $time),
                         'deleted' => 0, // 削除フラグをリセット
                     ]);
@@ -388,10 +404,10 @@ class AttendanceController extends Controller
         } else {
             // レコードが存在しない場合は新規作成
             foreach ($aditItems as $aditItem => $time) {
-                // dd($request->adit_id);
                 Adit::create([
                     'company_id' => $request->companyId,
                     'employee_id' => $request->employeeId,
+                    'event_id' => $request->event,
                     'date' => $request->date,
                     'minutes' => \Carbon\Carbon::createFromFormat('Y-m-d H:i', $request->date . ' ' . $time),
                     'adit_item' => $aditItem,
@@ -426,14 +442,20 @@ class AttendanceController extends Controller
 
     public function exportAttendanceList(Request $request)
     {
-        $currentYear = $request->input('year', now()->year);
         $currentMonth = $request->input('month', now()->month);
-    
-        // データ取得（同じロジックを再利用）
-        $startDate = now()->startOfMonth()->toDateString();
-        $endDate = now()->endOfMonth()->toDateString();
-    
-        $employees = Employee::where('company_id', $request->companyId)->get();
+        $currentYear = $request->input('year', now()->year);
+        
+        // 指定された月の開始日と終了日を取得
+        $startDate = Carbon::create($currentYear, $currentMonth, 1)->startOfMonth()->toDateString();
+        $endDate = Carbon::create($currentYear, $currentMonth, 1)->endOfMonth()->toDateString();
+
+        $employees = Employee::join('daily_summaries', 'employees.id', '=', 'daily_summaries.employee_id')
+                    ->where('employees.company_id', $request->companyId)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->select('employees.*')
+                    ->distinct() // 重複を防ぐ
+                    ->get();
+
         $data = [];
         $totalSalary = 0;
     
@@ -463,6 +485,13 @@ class AttendanceController extends Controller
     
         // ヘッダー行を含むデータを準備
         $csvData = [];
+
+        // **先頭に「〇〇年〇〇月分の出勤簿」を追加**
+        $csvData[] = ["{$currentYear}年 {$currentMonth}月分の出勤簿"];
+
+        // 空行を追加（見やすくするため）
+        $csvData[] = [];
+
         $csvData[] = ['名前', '出勤日数', '総労働時間', '総給与'];
     
         foreach ($data as $row) {

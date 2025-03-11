@@ -183,6 +183,7 @@
                                 <option value="break_end" {{ $record->adit_item === 'break_end' ? 'selected' : '' }}>休憩終了</option>
                                 <option value="work_end" {{ $record->adit_item === 'work_end' ? 'selected' : '' }}>退勤</option>
                             </select>
+                            <input type="hidden" value="{{$eventSelected->id}}">
                     </td>
                     <td>
                         @switch($record->status)
