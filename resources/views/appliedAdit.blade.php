@@ -186,6 +186,7 @@
                                     <input type="hidden" name="minutes" value="{{ $record['minutes'] }}">
                                     <input type="hidden" name="adit_item" value="{{ $record['adit_item'] }}">
                                     <input type="hidden" name="before_adit_id" value="{{ $record['adit_id'] }}">
+                                    <input type="hidden" name="event_id" value="{{ $record['event_id'] }}">
                                     <button type="submit" class="btn btn-reject">却下</button>
                                 </form>
                                 @endif

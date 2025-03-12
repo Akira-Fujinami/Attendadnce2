@@ -57,8 +57,6 @@ class AttendanceController extends Controller
                                 $hasPending = $records->contains(function ($record) {
                                     return $record->status === 'pending';
                                 });
-                                $hasWorkStart = $records->contains('adit_item', 'work_start');
-                                $hasWorkEnd = $records->contains('adit_item', 'work_end');
                         
                                 // エラーフラグを追加
                                 $error = AditController::error(Auth::User()->company_id, Auth::User()->id, $date);

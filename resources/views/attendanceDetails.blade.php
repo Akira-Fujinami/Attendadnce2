@@ -123,6 +123,33 @@
         .delete-btn:hover {
             background-color: #c82333;
         }
+        .custom-select {
+            width: 70%; /* 幅を調整 */
+            padding: 8px;
+            font-size: 1.1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        .custom-select option {
+            padding: 10px;
+            font-size: 1em;
+            background-color: #fff;
+            color: #333;
+        }
+        .custom-select option:checked {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        .select-container {
+            display: flex;
+            gap: 10px; /* 間隔を調整 */
+            align-items: center;
+        }
+
+
 
         @media screen and (max-width: 768px) {
             table {
@@ -150,6 +177,15 @@
         function confirmDelete() {
             return confirm("本当に削除しますか？");
         }
+        function updateHiddenEventId(selectElement) {
+            let selectedOption = selectElement.options[selectElement.selectedIndex];
+            let eventId = selectedOption.getAttribute('data-event-id');
+
+            // すべての hidden_event_id を取得して更新
+            document.querySelectorAll('input[name="event_id"]').forEach(hiddenInput => {
+                hiddenInput.value = eventId;
+            });
+        }
     </script>
 
 </head>
@@ -161,6 +197,23 @@
             $Date = $parsedDate->format('Y/n/j') . ' (' . $weekdays[$parsedDate->format('D')] . ')';
         @endphp
         <h1>{{ $Date }}</h1>
+        <form method="POST" action="{{ route('attendance.update.event', ['date' => $date]) }}" class="form-inline">
+            @csrf
+            <div class="select-container">
+                <select name="event_item" class="custom-select" onchange="updateHiddenEventId(this)">
+                <option value="" disabled {{ empty($eventSelected) ? 'selected' : '' }}>選択してください</option>
+                    @foreach ($events as $eventItem)
+                        <option value="{{ $eventItem->value }}" 
+                            data-event-id="{{ $eventItem->id }}"
+                            {{ isset($eventSelected) && $eventSelected->id == $eventItem->id ? 'selected' : '' }}>
+                            {{ $eventItem->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <input type="hidden" name="event_id" id="hidden_event_id" value="{{ $eventSelected->id ?? '' }}">
+                <button type="submit" class="save-btn">保存</button>
+            </div>
+        </form>
 
         <table>
             <thead>
@@ -183,7 +236,7 @@
                                 <option value="break_end" {{ $record->adit_item === 'break_end' ? 'selected' : '' }}>休憩終了</option>
                                 <option value="work_end" {{ $record->adit_item === 'work_end' ? 'selected' : '' }}>退勤</option>
                             </select>
-                            <input type="hidden" value="{{$eventSelected->id}}">
+                            <input type="hidden" name="event_id" value="{{ $eventSelected->id ?? '' }}">
                     </td>
                     <td>
                         @switch($record->status)
@@ -207,6 +260,7 @@
                         <form method="POST" action="{{ route('attendance.delete', ['id' => $record->id]) }}" onsubmit="return confirmDelete()">
                             @csrf
                             <button type="submit" class="delete-btn">削除</button>
+                            <input type="hidden" name="event_id" value="{{ $eventSelected->id ?? '' }}">
                         </form>
                         </div>
                     </td>
@@ -236,6 +290,7 @@
                 <option value="break_end">休憩終了</option>
                 <option value="work_end">退勤</option>
             </select>
+            <input type="hidden" name="event_id" id="hidden_event_id" value="{{ $eventSelected->id ?? '' }}">
             <button type="submit" class="save-btn">追加</button>
         </form>
 

@@ -315,6 +315,7 @@
                             @foreach ($recordsForDate['records'] as $record)
                                 @if ($record['adit_item'] === 'work_start' && !is_null($record['minutes']))
                                     {{ \Carbon\Carbon::parse($record['minutes'])->format('H:i') }}
+                                    @break
                                 @endif
                             @endforeach
                         @endif
@@ -324,6 +325,7 @@
                             @foreach ($recordsForDate['records'] as $record)
                                 @if ($record['adit_item'] === 'work_end' && !is_null($record['minutes']))
                                     {{ \Carbon\Carbon::parse($record['minutes'])->format('H:i') }}
+                                    @break
                                 @endif
                             @endforeach
                         @endif

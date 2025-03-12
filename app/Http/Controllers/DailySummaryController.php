@@ -33,6 +33,7 @@ class DailySummaryController extends Controller
         $aditExists = Adit::whereDate('date', $date)
         ->where('company_id', $companyId)
         ->where('employee_id', $employeeId)
+        ->where('deleted', 0)
         ->exists();
         $employee = Employee::find($employeeId);
         if ($aditExists && !AditController::error($companyId, $employeeId, $date)) {
@@ -42,6 +43,7 @@ class DailySummaryController extends Controller
             $salary = AditController::calculateSalary($employee->hourly_wage, $employee->transportation_fee, $totalWorkHours, $totalBreakHours);
 
             $dailySummary->update([
+            'event_id' => $eventId,
             'total_work_hours' => $totalWorkHours,
             'total_break_hours' => $totalBreakHours,
             'overtime_hours' => max($totalWorkHours - 8, 0), // 8時間以上の場合は残業
@@ -50,6 +52,7 @@ class DailySummaryController extends Controller
         }
         if (AditController::error($companyId, $employeeId, $date)) {
             $dailySummary->update([
+                'event_id' => $eventId,
                 'total_work_hours' => 0,
                 'total_break_hours' => 0,
                 'overtime_hours' => 0, // 8時間以上の場合は残業

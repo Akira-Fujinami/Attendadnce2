@@ -20,6 +20,7 @@ class DailySummary extends Model
     protected $fillable = [
         'company_id',
         'employee_id',
+        'event_id',
         'date',
         'total_work_hours',
         'total_break_hours',

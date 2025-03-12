@@ -59,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/events/export', [EventController::class, 'export'])->name('eventAttendance.export');
     Route::post('/attendance/update/{id}', [AttendanceDetailsController::class, 'update'])->name('attendance.update');
     Route::post('/attendance/delete/{id}', [AttendanceDetailsController::class, 'delete'])->name('attendance.delete');
+    Route::post('/attendance/update/event/{date}', [AttendanceDetailsController::class, 'updateEvent'])->name('attendance.update.event');
     Route::post('/attendance/store', [AttendanceDetailsController::class, 'store'])->name('attendance.store');
     Route::get('/dailyAttendance/export', [DailyAttendanceController::class, 'exportDailyAttendance'])->name('dailyAttendance.export');
     Route::get('/staffCreate', function () { return view('staffCreate');})->name('staffCreate');

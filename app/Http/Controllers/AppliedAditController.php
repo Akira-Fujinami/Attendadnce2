@@ -122,10 +122,11 @@ class AppliedAditController extends Controller
         ->first();
         if ($adit['deleted'] == 1) {
             $adit->update([
+                'event_id' => $request->event_id,
                 'status' => 'approved',
                 'deleted' => 0,
             ]);
-            DailySummaryController::summary($request->company_id, $request->employee_id, $request->date);
+            DailySummaryController::summary($request->company_id, $request->employee_id, $request->event_id, $request->date);
             return back();
         }
 
