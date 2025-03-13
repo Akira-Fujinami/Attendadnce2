@@ -27,7 +27,8 @@ class AttendanceDetailsController extends Controller
         $eventId = $aditRecords->pluck('event_id')->first() ?? '';
         $eventSelected = Event::where('id', $eventId)
             ->first();
-        $events = Event::where('fromDate', '<=', $date)
+        $events = Event::where('company_id', $companyId)
+        ->where('fromDate', '<=', $date)
         ->where('toDate', '>=', $date)
         ->get();
 

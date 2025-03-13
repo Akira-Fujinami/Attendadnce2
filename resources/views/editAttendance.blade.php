@@ -421,6 +421,7 @@
 
         <h1>打刻修正画面</h1>
         <!-- イベント選択のドロップダウン -->
+        @if(!$disable)
         @if ($events->isNotEmpty())
             <div class="select-container">
                 <select id="eventSelect" name="event_id" class="styled-select">
@@ -438,8 +439,6 @@
                 </select>
             </div>
         @endif
-
-        @if(!$disable)
             @if ($pending)
                 <div class="warning-message">
                     ⚠ 未承認の打刻データがあります。<br>

@@ -239,6 +239,7 @@
         <input type="hidden" name="company_id" value="{{ Auth::user()->company_id }}">
         <input type="hidden" name="wage" value="{{ Auth::user()->hourly_wage }}">
         <input type="hidden" name="transportation" value="{{ Auth::user()->transportation_fee }}">
+        <input type="hidden" name="event" value="{{ session('evId') }}">
     </form>
     @if(!empty($data['errors']))
         @foreach($data['errors'] as $error)

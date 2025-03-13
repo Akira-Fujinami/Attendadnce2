@@ -193,8 +193,10 @@ class AttendanceController extends Controller
         // スタッフ情報を取得
         $employee = Employee::findOrFail($employeeId);
 
+        $year = $year ?? date('Y'); 
+
         if ($month < 1) {
-            $year--;
+            $year = max(0, $year - 1); // 年が負の値にならないようにする
             $month = 12;
         }
     
@@ -330,10 +332,10 @@ class AttendanceController extends Controller
                 'currentRecord' => $filteredRecords->where('status', 'pending')->values()->all(), // 最新のレコード
             ];            
         }
-        $events = Event::where('fromDate', '<=', $date)
+        $events = Event::where('company_id', Auth::User()->company_id)
+                ->where('fromDate', '<=', $date)
                ->where('toDate', '>=', $date)
                ->get();
-
 
         // Bladeに渡すデータ
         return view('editAttendance', [
