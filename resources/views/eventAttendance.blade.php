@@ -163,6 +163,14 @@
 
         }
     </style>
+    <script>
+        function updateEventIdAndSubmit(selectElement) {
+            let selectedEventId = selectElement.value;
+            document.getElementById('selected_event_id').value = selectedEventId;
+            selectElement.form.submit();
+        }
+
+    </script>
 </head>
 <body>
     <div class="container">
@@ -188,7 +196,8 @@
         <!-- イベント選択 -->
         <div class="dropdown">
             <form action="{{ route('events.show') }}" method="GET">
-                <select name="event_id" onchange="this.form.submit()">
+                <input type="hidden" name="selected_event_id" id="selected_event_id" value="">
+                <select name="event_id" onchange="updateEventIdAndSubmit(this)">
                     <option value="" disabled selected>イベントを選択してください</option>
                     @foreach ($allEvents as $ev)
                         @php

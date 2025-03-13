@@ -14,6 +14,7 @@ use App\Http\Controllers\DailyAttendanceController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\QrLoginController;
 use App\Http\Controllers\AditQrController;
+use App\Http\Controllers\AttendanceByPeriodController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,7 +44,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/staffEdit', [StaffController::class, 'edit'])->name('staffEdit');
     Route::put('/staff/update/{id}', [StaffController::class, 'update'])->name('staffUpdate');
     Route::get('/attendanceList', [AttendanceController::class, 'attendanceList'])->name('attendanceList');
-    Route::get('/attendanceDetail/{employeeId?}/{year?}/{month?}/{eventId?}', [AttendanceController::class, 'attendanceDetail'])->name('attendanceDetail');
+    Route::get('/attendanceDetail/{employeeId}/{year?}/{month?}/{eventId?}', [AttendanceController::class, 'attendanceDetail'])->name('attendanceDetail');
     Route::get('/attendance/{date}/{employeeId}/{companyId}', [AttendanceDetailsController::class, 'showDetails'])->name('attendanceDetails');
     Route::get('/appliedAdit/{companyId}', [AppliedAditController::class, 'index'])->name('appliedAdit');
     Route::post('/adit/approve', [AppliedAditController::class, 'approveAdit'])->name('adit.approve');
@@ -60,6 +61,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/attendance/update/{id}', [AttendanceDetailsController::class, 'update'])->name('attendance.update');
     Route::post('/attendance/delete/{id}', [AttendanceDetailsController::class, 'delete'])->name('attendance.delete');
     Route::post('/attendance/update/event/{date}', [AttendanceDetailsController::class, 'updateEvent'])->name('attendance.update.event');
+    Route::get('/attendance/by-period', [AttendanceByPeriodController::class, 'showByPeriod'])->name('attendance.byPeriod');
+    Route::get('/attendance/by-period/export', [AttendanceByPeriodController::class, 'exportPeriodAttendance'])->name('attendance.period.export');
     Route::post('/attendance/store', [AttendanceDetailsController::class, 'store'])->name('attendance.store');
     Route::get('/dailyAttendance/export', [DailyAttendanceController::class, 'exportDailyAttendance'])->name('dailyAttendance.export');
     Route::get('/staffCreate', function () { return view('staffCreate');})->name('staffCreate');

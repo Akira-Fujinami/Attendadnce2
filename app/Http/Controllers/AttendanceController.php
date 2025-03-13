@@ -188,7 +188,7 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function attendanceDetail($employeeId, $year, $month, $eventId = null)
+    public function attendanceDetail(Request $request, $employeeId, $year = null, $month = null, $eventId = null)
     {
         // スタッフ情報を取得
         $employee = Employee::findOrFail($employeeId);
@@ -216,7 +216,13 @@ class AttendanceController extends Controller
             $event = Event::where('company_id', Auth::User()->id)
             ->where('id', $eventId)->first();
             $summaries = DailySummary::where('employee_id', $employeeId)
+            ->where('event_id', $eventId)
             ->whereBetween('date', [$event->fromDate, $event->toDate])
+            ->get();
+        }
+        if ($request->period) {
+            $summaries = DailySummary::where('employee_id', $employeeId)
+            ->whereBetween('date', [$request->start, $request->end])
             ->get();
         }
 

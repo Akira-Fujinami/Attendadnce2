@@ -276,6 +276,9 @@
                 <a href="{{ route('events.show') }}" class="btn">
                     🎉 イベント出勤簿
                 </a>
+                <a href="{{ route('attendance.byPeriod') }}" class="btn">
+                    ⏳ 期間別出勤簿
+                </a>
                 <a href="{{ route('appliedAdit', ['companyId' => Auth::User()->id]) }}" class="btn alert-btn">
                     ⚠️ 未承認打刻一覧
                 </a>

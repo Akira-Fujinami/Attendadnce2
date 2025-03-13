@@ -32,6 +32,7 @@ class EventController extends Controller
             foreach ($employees as $employee) {
                 $summary = DailySummary::where('company_id', Auth::User()->id)
                 ->where('employee_id', $employee->id)
+                ->where('event_id', $request->selected_event_id)
                 ->whereBetween('date', [$event->fromDate, $event->toDate])
                 ->selectRaw('SUM(total_work_hours) as totalWorkHours, COUNT(date) as attendanceDays, SUM(salary) as totalSalary')
                 ->first();
