@@ -20,6 +20,22 @@ class QrLoginController extends Controller
             return redirect()->route('events.index')->withErrors('イベントが見つかりません。');
         }
 
+        $fromTimestamp = $request->input('from');
+        $toTimestamp = $request->input('to');
+    
+        // 現在の時間（UNIXタイムスタンプ）
+        $currentTimestamp = now()->timestamp;
+    
+        // 有効期限のチェック
+        if ($currentTimestamp < $fromTimestamp || $currentTimestamp > $toTimestamp) {
+            return redirect()->route('qr.expired'); // 有効期限切れページにリダイレクト
+        }
+        $expiresAt = now()->addMinutes(10)->timestamp; // **5分後の期限を設定**
+    
+        session([
+            'qr_authenticated_expires' => $expiresAt, // **5分後に期限切れ**
+        ]);
+
         return view('qr-login', compact('eventId', 'event'));
     }
 
@@ -31,6 +47,13 @@ class QrLoginController extends Controller
             'password' => 'required',
             'event_id' => 'required|exists:events,id'
         ]);
+        $expiresAt = session('qr_authenticated_expires');
+        $currentTimestamp = now()->timestamp;
+
+        if ($currentTimestamp > $expiresAt) {
+            session()->forget(['qr_authenticated_token', 'qr_authenticated_expires']); // セッション削除
+            return redirect()->route('qr.expired')->withErrors('QRコードの有効期限が切れました。');
+        }
 
         $credentials = $request->only('email', 'password');
         $eventId = $request->input('event_id');

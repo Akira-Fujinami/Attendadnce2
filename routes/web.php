@@ -94,3 +94,6 @@ Route::post('/qr_logout', [QRLoginController::class, 'logout'])->name('qr_logout
 Route::post('/resetPassword', [LoginController::class, 'resetPassword'])->name('password.reset');
 Route::get('/qr/login', [QrLoginController::class, 'showLoginForm'])->name('qr.login');
 Route::post('/qr/login', [QrLoginController::class, 'login'])->name('qr.login.post');
+Route::get('/qr/expired', function () {
+    return view('qrExpired');
+})->name('qr.expired');

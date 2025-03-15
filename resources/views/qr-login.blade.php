@@ -85,7 +85,8 @@
             <label for="password">パスワード:</label>
             <input type="password" name="password" id="password" required value="{{ session('saved_password', '') }}">
 
-            <button type="submit" class="btn" id ="login-btn">ログイン</button>
+            <button type="submit" class="btn" id ="login-btn">ログイン</button><br>
+            <a href="{{ route('passwordReset') }}">パスワードをお忘れですか？</a>
         </form>
     </div>
 </body>
