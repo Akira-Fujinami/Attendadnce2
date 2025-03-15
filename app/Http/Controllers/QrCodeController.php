@@ -18,7 +18,7 @@ class QrCodeController extends Controller
 
         // QRコードに埋め込むURL（ログインページにイベントIDを付与）
         $qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . 
-        urlencode(route('qr.login', [
+        urlencode(route('qr.scanned', [
             'event_id' => $event->id,
             'from' => $fromTimestamp,
             'to' => $toTimestamp

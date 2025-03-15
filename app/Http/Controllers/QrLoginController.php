@@ -7,12 +7,33 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
 use App\Models\Event;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class QrLoginController extends Controller
 {
+    public function qrScanned(Request $request)
+    {
+        // ✅ QRコードをスキャンしたことをセッションに記録
+        session(['qr_scanned' => true]);
+
+        return redirect()->route('qr.login', [
+            'event_id' => $request->input('event_id'),
+            'from' => $request->input('from'),
+            'to' => $request->input('to')
+        ]);
+    }
+    public function directAccessError()
+    {
+        return abort(403, '不正なアクセスです。QRコードをスキャンしてください。');
+    }
+
+
     // QRコードログインページを表示
     public function showLoginForm(Request $request)
     {
+        if (!$request->session()->has('qr_scanned')) {
+            return redirect()->route('login.error');
+        }
         $eventId = $request->input('event_id');
         $event = Event::find($eventId);
 
@@ -30,11 +51,8 @@ class QrLoginController extends Controller
         if ($currentTimestamp < $fromTimestamp || $currentTimestamp > $toTimestamp) {
             return redirect()->route('qr.expired'); // 有効期限切れページにリダイレクト
         }
-        $expiresAt = now()->addMinutes(10)->timestamp; // **5分後の期限を設定**
     
-        session([
-            'qr_authenticated_expires' => $expiresAt, // **5分後に期限切れ**
-        ]);
+        session(['qr_scanned' => true]);
 
         return view('qr-login', compact('eventId', 'event'));
     }
@@ -42,18 +60,15 @@ class QrLoginController extends Controller
     // QRコードログイン処理
     public function login(Request $request)
     {
+        if (!session('qr_scanned')) {
+            return abort(403, '不正なアクセスです。QRコードをスキャンしてください。');
+        }
+        session()->forget('qr_scanned');
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
             'event_id' => 'required|exists:events,id'
         ]);
-        $expiresAt = session('qr_authenticated_expires');
-        $currentTimestamp = now()->timestamp;
-
-        if ($currentTimestamp > $expiresAt) {
-            session()->forget(['qr_authenticated_token', 'qr_authenticated_expires']); // セッション削除
-            return redirect()->route('qr.expired')->withErrors('QRコードの有効期限が切れました。');
-        }
 
         $credentials = $request->only('email', 'password');
         $eventId = $request->input('event_id');
@@ -67,6 +82,7 @@ class QrLoginController extends Controller
                 'evId' => Event::find($eventId)->id,
             ]);
             Auth::guard('employees')->login($employee);
+            session()->forget('qr_scanned');
             return redirect()->route('adit_qr', ['event' => $eventId])
                 ->withCookie(cookie('email', $request->email, 60 * 24 * 30))
                 ->with('success', '従業員としてログインしました');
